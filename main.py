@@ -6,8 +6,6 @@ import random
 import json
 import os
 
-import random
-
 class Joueurs:
     tous_les_joueurs = []
 
