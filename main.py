@@ -2,18 +2,24 @@
 Ceci est le code source pour le logiciel du tournoi d'Echecs local
 
 """""""""""
-# main.py
-# main.py
-from view.view import JoueurView
-from controller.controller import JoueurController
+
+from controller.controller import Controller
+from view.view import View
+from models.models import Joueur, Tournoi, Tour, Match
+from datetime import datetime
 
 def main():
-    fichier = 'joueurs.json'  # Nom du fichier JSON pour enregistrer les joueurs
-    view = JoueurView()
-    controller = JoueurController(view, fichier)
-    controller.create_joueurs()
+    model = Joueur, Tournoi, Tour, Match  # Initialisez votre modèle avec les classes
+    view = View()  # Initialisez votre vue
+    controller = Controller(model, view)  # Passez le modèle et la vue au contrôleur
+    controller.run()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
 
+
+
+
+
+    
