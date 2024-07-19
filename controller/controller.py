@@ -1,5 +1,3 @@
-# controller.py
-
 from datetime import datetime
 import json
 from models.models import Joueur
@@ -49,14 +47,14 @@ class Controller:
             while faux_mat:
                 matricule = input("Matricule du joueur (deux majuscules suivies de cinq chiffres) : ")
                 if len(matricule) == 7 and matricule[:2].isalpha() and matricule[:2].isupper() and matricule[2:].isdigit():
-                    faux_mat = False
+                    if self.matricule_existe(matricule):
+                        self.view.afficher_erreur("Le matricule existe déjà. Veuillez entrer un matricule unique.")
+                    else:
+                        faux_mat = False
                 else:
                     self.view.afficher_erreur("Format du matricule incorrect. Utilisez deux majuscules suivies de cinq chiffres.")
                     
-
             joueur_ajoute = Joueur(nom, prenom, date_naissance, matricule)
-            self.view.afficher_message(f"Le joueur {joueur_ajoute.prenom} {joueur_ajoute.nom} a été ajouté avec succès !")
-
             while True:
                 choix = input("Voulez-vous confirmer l'inscription du joueur ? (oui/non) : ")
                 if choix.lower() == "oui":
@@ -67,30 +65,36 @@ class Controller:
                 else:
                     self.view.afficher_erreur("Choix invalide. Veuillez entrer 'oui' ou 'non'.")
             break
-
+        
     def enregistrer_joueur(self, joueur):
         joueurs_inscrits = self.charger_joueurs_inscrits()
-        joueurs_inscrits.append(joueur.to_dict())
+        joueurs_inscrits.append(joueur.to_dict())  # Convertir l'objet en dictionnaire
 
         with open('Données_des_Participants.json', 'w') as f:
             json.dump(joueurs_inscrits, f, indent=4)
 
-        self.view.afficher_message(f"Le joueur {joueur.prenom} {joueur.nom} a été enregistré avec succès dans le fichier joueurs_inscrits.json.")
+        self.view.afficher_message(f"Le joueur {joueur.prenom} {joueur.nom} a été enregistré avec succès dans le fichier Données_des_Participants.json.")
 
     def charger_joueurs_inscrits(self):
         try:
             with open('Données_des_Participants.json', 'r') as f:
                 joueurs_data = json.load(f)
-                joueurs_inscrits = [Joueur.from_dict(joueur) for joueur in joueurs_data]
-                return joueurs_inscrits
-        except FileNotFoundError:
+                return joueurs_data
+        except (FileNotFoundError, json.JSONDecodeError):
             return []
+
+    def matricule_existe(self, matricule):
+        joueurs_inscrits = self.charger_joueurs_inscrits()
+        for joueur in joueurs_inscrits:
+            if joueur['matricule'] == matricule:
+                return True
+        return False
 
     def afficher_tous_les_joueurs(self):
         joueurs = self.charger_joueurs_inscrits()
         self.view.afficher_message("Liste de tous les joueurs :")
         for joueur in joueurs:
-            self.view.afficher_message(f"{joueur.prenom} {joueur.nom} - Date de naissance : {joueur.date_naissance.strftime('%d/%m/%Y')}")
+            self.view.afficher_message(f"{joueur['prenom']} {joueur['nom']} - Date de naissance : {joueur['date_naissance']}")
 
     def afficher_tous_les_tournois(self):
         tournois = self.model.afficher_tous_les_tournois()
@@ -103,6 +107,9 @@ class Controller:
 
     def charger_tout(self):
         self.model.charger_tournois()
+
+
+
 
 
 
