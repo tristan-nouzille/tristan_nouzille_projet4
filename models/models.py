@@ -16,13 +16,15 @@ class Joueur:
             'matricule': self.matricule
         }
 
-    @staticmethod
-    def from_dict(data):
-        return Joueur(data['nom'], data['prenom'], datetime.strptime(data['date_naissance'], '%d/%m/%Y'), data['matricule'])
-
     @classmethod
-    def creer_joueur(cls, nom, prenom, date_naissance, matricule):
-        return cls(nom, prenom, date_naissance, matricule)
+    def from_dict(cls, data):
+        return cls(
+            data['nom'],
+            data['prenom'],
+            datetime.strptime(data['date_naissance'], '%d/%m/%Y'),
+            data['matricule']
+        )
+
 
 class Tournoi:
     def __init__(self, nom, lieu, date_debut, date_fin, nombre_tours=4, description=""):
@@ -34,7 +36,10 @@ class Tournoi:
         self.tours = []
         self.joueurs_inscrits = []
         self.description = description
-
+        
+    def ajouter_tour(self, tour):
+        self.tours.append(tour)
+        
     def to_dict(self):
         return {
             'nom': self.nom,
@@ -80,26 +85,23 @@ class Tour:
 
 
 class Match:
-    def __init__(self, joueur1, joueur2, score1=None, score2=None):
+    def __init__(self, joueur1, joueur2):
         self.joueur1 = joueur1
         self.joueur2 = joueur2
-        self.score1 = score1
-        self.score2 = score2
+        self.resultat = None  # 'Joueur1', 'Joueur2', 'Egalité'
+
+    def definir_resultat(self, resultat):
+        if resultat in ['Joueur1', 'Joueur2', 'Egalité']:
+            self.resultat = resultat
+        else:
+            raise ValueError("Résultat invalide. Utilisez 'Joueur1', 'Joueur2' ou 'Egalité'.")
 
     def to_dict(self):
         return {
             'joueur1': self.joueur1.to_dict(),
             'joueur2': self.joueur2.to_dict(),
-            'score1': self.score1,
-            'score2': self.score2
+            'resulta': self.resultat
         }
-
-    @staticmethod
-    def from_dict(data):
-        joueur1 = Joueur.from_dict(data['joueur1'])
-        joueur2 = Joueur.from_dict(data['joueur2'])
-        return Match(joueur1, joueur2, data.get('score1'), data.get('score2'))
-
 
 
 
