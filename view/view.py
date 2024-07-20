@@ -8,7 +8,8 @@ class View:
         print("2. Ajouter un joueur")
         print("3. Afficher tous les joueurs")
         print("4. Afficher tous les tournois")
-        print("5. Quitter")
+        print("5. Lancer un tournoi")
+        print("6. Quitter")
         print()
 
     @staticmethod
@@ -18,6 +19,7 @@ class View:
     @staticmethod
     def afficher_erreur(message):
         print(f"Erreur: {message}")
+
 
 
 

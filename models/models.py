@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import random
 
 class Joueur:
     def __init__(self, nom, prenom, date_naissance, matricule):
@@ -40,6 +41,15 @@ class Tournoi:
     def ajouter_tour(self, tour):
         self.tours.append(tour)
         
+    def generer_paires(self):
+        joueurs = sorted(self.joueurs_inscrits, key=lambda j: j.score, reverse=True)
+        paires = []
+        while len(joueurs) > 1:
+            joueur1 = joueurs.pop(0)
+            joueur2 = joueurs.pop(0)
+            paires.append((joueur1, joueur2))
+        return paires 
+      
     def to_dict(self):
         return {
             'nom': self.nom,
@@ -67,6 +77,15 @@ class Tour:
         self.date_fin = None
         self.matchs = []
 
+    def commencer(self):
+        self.date_debut = datetime.now()
+
+    def terminer(self):
+        self.date_fin = datetime.now()
+
+    def ajouter_match(self, match):
+        self.matchs.append(match)
+
     def to_dict(self):
         return {
             'nom': self.nom,
@@ -75,20 +94,12 @@ class Tour:
             'matchs': [match.to_dict() for match in self.matchs]
         }
 
-    @staticmethod
-    def from_dict(data):
-        tour = Tour(data['nom'])
-        tour.date_debut = datetime.fromisoformat(data['date_debut']) if 'date_debut' in data and data['date_debut'] else None
-        tour.date_fin = datetime.fromisoformat(data['date_fin']) if 'date_fin' in data and data['date_fin'] else None
-        tour.matchs = [Match.from_dict(m) for m in data['matchs']] if 'matchs' in data else []
-        return tour
-
 
 class Match:
     def __init__(self, joueur1, joueur2):
         self.joueur1 = joueur1
         self.joueur2 = joueur2
-        self.resultat = None  # 'Joueur1', 'Joueur2', 'Egalité'
+        self.resultat = None
 
     def definir_resultat(self, resultat):
         if resultat in ['Joueur1', 'Joueur2', 'Egalité']:
@@ -100,9 +111,8 @@ class Match:
         return {
             'joueur1': self.joueur1.to_dict(),
             'joueur2': self.joueur2.to_dict(),
-            'resulta': self.resultat
+            'resultat': self.resultat
         }
-
 
 
 
