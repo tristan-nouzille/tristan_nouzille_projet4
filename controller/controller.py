@@ -1,4 +1,3 @@
-
 import json
 import os
 from datetime import datetime
@@ -11,6 +10,9 @@ class Controller:
         self.view = view
         self.joueurs_path = os.path.join('data', 'Données_des_Participants.json')
         self.tournois_path = os.path.join('data', 'tournois.json')
+        # Assurez-vous que les dossiers existent
+        os.makedirs(os.path.dirname(self.joueurs_path), exist_ok=True)
+        os.makedirs(os.path.dirname(self.tournois_path), exist_ok=True)
 
     def run(self):
         while True:
@@ -152,20 +154,24 @@ class Controller:
             return []
 
     def enregistrer_tournoi(self, tournoi):
-        tournoi_data = tournoi if isinstance(tournoi, dict) else tournoi.to_dict()
-        try:
-            with open(self.tournois_path, 'r') as f:
+     tournoi_data = tournoi if isinstance(tournoi, dict) else tournoi.to_dict()
+     try:
+        with open(self.tournois_path, 'r') as f:
+            if os.stat(self.tournois_path).st_size == 0:
+                tournois = []
+            else:
                 tournois = json.load(f)
-        except FileNotFoundError:
-            tournois = []
+     except (FileNotFoundError, json.JSONDecodeError):
+        tournois = []
 
-        # Supprimer le tournoi existant avec le même nom
-        tournois = [t for t in tournois if t['nom'] != tournoi_data['nom']]
+    # Supprimer le tournoi existant avec le même nom
+     tournois = [t for t in tournois if t['nom'] != tournoi_data['nom']]
 
-        tournois.append(tournoi_data)
-        
-        with open(self.tournois_path, 'w') as f:
-            json.dump(tournois, f, indent=4)
+     tournois.append(tournoi_data)
+
+     with open(self.tournois_path, 'w') as f:
+        json.dump(tournois, f, indent=4)
+
 
     def charger_tous_les_tournois(self):
         try:
@@ -191,6 +197,152 @@ class Controller:
                 self.view.afficher_joueur_disponible(joueur)
         else:
             self.view.afficher_message("Aucun joueur disponible pour inscription.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -28,71 +28,96 @@ class Joueur:
 
 
 class Tournoi:
-    def __init__(self, nom, lieu, date_debut, date_fin, nombre_tours=4, description=""):
+    def __init__(self, nom, lieu, date_debut, date_fin, nombre_tours, description):
         self.nom = nom
         self.lieu = lieu
-        self.date_debut = date_debut
-        self.date_fin = date_fin
+        self.date_debut = datetime.strptime(date_debut, '%d/%m/%Y') if isinstance(date_debut, str) else date_debut
+        self.date_fin = datetime.strptime(date_fin, '%d/%m/%Y') if isinstance(date_fin, str) else date_fin
         self.nombre_tours = nombre_tours
-        self.tours = []
-        self.joueurs_inscrits = []
         self.description = description
-        
-    def ajouter_tour(self, tour):
-        self.tours.append(tour)
-        
-    def generer_paires(self):
-        joueurs = sorted(self.joueurs_inscrits, key=lambda j: j.score, reverse=True)
-        paires = []
-        while len(joueurs) > 1:
-            joueur1 = joueurs.pop(0)
-            joueur2 = joueurs.pop(0)
-            paires.append((joueur1, joueur2))
-        return paires 
-      
+        self.joueurs_inscrits = []
+        self.tours = []
+
     def to_dict(self):
         return {
             'nom': self.nom,
             'lieu': self.lieu,
-            'date_debut': self.date_debut.isoformat(),
-            'date_fin': self.date_fin.isoformat(),
+            'date_debut': self.date_debut.strftime('%d/%m/%Y'),
+            'date_fin': self.date_fin.strftime('%d/%m/%Y'),
             'nombre_tours': self.nombre_tours,
-            'tours': [tour.to_dict() for tour in self.tours],
+            'description': self.description,
             'joueurs_inscrits': [joueur.to_dict() for joueur in self.joueurs_inscrits],
-            'description': self.description
+            'tours': [tour.to_dict() for tour in self.tours]
         }
 
-    @staticmethod
-    def from_dict(data):
-        tournoi = Tournoi(data['nom'], data['lieu'], datetime.fromisoformat(data['date_debut']), datetime.fromisoformat(data['date_fin']), data['nombre_tours'], data['description'])
-        tournoi.tours = [Tour.from_dict(t) for t in data['tours']] if 'tours' in data else []
-        tournoi.joueurs_inscrits = [Joueur.from_dict(j) for j in data['joueurs_inscrits']] if 'joueurs_inscrits' in data else []
+    @classmethod
+    def from_dict(cls, data):
+        tournoi = cls(
+            data['nom'],
+            data['lieu'],
+            data['date_debut'],
+            data['date_fin'],
+            data['nombre_tours'],
+            data['description']
+        )
+        tournoi.joueurs_inscrits = [Joueur.from_dict(j) for j in data['joueurs_inscrits']]
+        tournoi.tours = [Tour.from_dict(t) for t in data['tours']]
         return tournoi
 
 
 class Tour:
-    def __init__(self, nom):
+    def __init__(self, nom, date_debut=None, date_fin=None):
         self.nom = nom
-        self.date_debut = None
-        self.date_fin = None
+        self.date_debut = date_debut
+        self.date_fin = date_fin
         self.matchs = []
-
-    def commencer(self):
-        self.date_debut = datetime.now()
-
-    def terminer(self):
-        self.date_fin = datetime.now()
 
     def ajouter_match(self, match):
         self.matchs.append(match)
 
     def to_dict(self):
         return {
-            'nom': self.nom,
-            'date_debut': self.date_debut.isoformat() if self.date_debut else None,
-            'date_fin': self.date_fin.isoformat() if self.date_fin else None,
-            'matchs': [match.to_dict() for match in self.matchs]
+            "nom": self.nom,
+            "date_debut": self.date_debut.isoformat() if self.date_debut else None,
+            "date_fin": self.date_fin.isoformat() if self.date_fin else None,
+            "matchs": [match.to_dict() for match in self.matchs]
         }
+
+    @staticmethod
+    def from_dict(data):
+        tour = Tour(
+            nom=data["nom"],
+            date_debut=datetime.fromisoformat(data["date_debut"]) if data["date_debut"] else None,
+            date_fin=datetime.fromisoformat(data["date_fin"]) if data["date_fin"] else None
+        )
+        # Ajouter les matchs à partir des données
+        for match_data in data.get("matchs", []):
+            tour.ajouter_match(Match.from_dict(match_data))
+        return tour
+
+class Match:
+    def __init__(self, joueur1, score1, joueur2, score2):
+        self.joueur1 = joueur1
+        self.score1 = score1
+        self.joueur2 = joueur2
+        self.score2 = score2
+
+    def to_dict(self):
+        return {
+            "joueur1": self.joueur1,
+            "score1": self.score1,
+            "joueur2": self.joueur2,
+            "score2": self.score2
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return Match(
+            joueur1=data["joueur1"],
+            score1=data["score1"],
+            joueur2=data["joueur2"],
+            score2=data["score2"]
+        )
 
 
 class Match:
@@ -113,6 +138,216 @@ class Match:
             'joueur2': self.joueur2.to_dict(),
             'resultat': self.resultat
         }
+
+
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+
+
+
+
+
+
 
 
 
