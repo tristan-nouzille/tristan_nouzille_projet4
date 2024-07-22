@@ -56,8 +56,9 @@ class View:
         description = input("Description du tournoi : ")
         return nom, lieu, date_debut, date_fin, description
 
-    def afficher_match(self, tour_nom, match):
-        print(f"{tour_nom} - Match {match.id}: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}")
+    def afficher_match(self, tour_nom, joueur1, joueur2):
+        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+
 
 
 

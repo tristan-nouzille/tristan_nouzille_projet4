@@ -87,17 +87,17 @@ class Tour:
     def __init__(self, nom, joueurs):
         self.nom = nom
         self.joueurs = joueurs
-        self.matchs = []
+        self.matchs = []  # Liste de Matchs
         self.date_debut = datetime.now()
         self.date_fin = None
 
     def commencer(self):
         random.shuffle(self.joueurs)
-        self.matchs = [(self.joueurs[i], self.joueurs[i + 1]) for i in range(0, len(self.joueurs) - 1, 2)]
+        # Crée des instances de Match
+        self.matchs = [Match(self.joueurs[i], 0, self.joueurs[i + 1], 0) for i in range(0, len(self.joueurs) - 1, 2)]
 
-    def ajouter_match(self, match):
-        match_id = len(self.matchs) + 1
-        match.id = match_id
+    def ajouter_match(self, joueur1, score1, joueur2, score2):
+        match = Match(joueur1, score1, joueur2, score2)
         self.matchs.append(match)
 
     def terminer(self):
@@ -112,23 +112,32 @@ class Tour:
         }
 
 
+
 class Match:
-    def __init__(self, joueur1, joueur2, match_id=None):
+    def __init__(self, joueur1, score1, joueur2, score2):
         self.joueur1 = joueur1
+        self.score1 = score1
         self.joueur2 = joueur2
-        self.resultat = None
-        self.id = match_id  # Ajout de l'identifiant du match
+        self.score2 = score2
 
     def definir_resultat(self, resultat):
-        self.resultat = resultat
+        if resultat == 'Joueur1':
+            self.score1 += 1
+        elif resultat == 'Joueur2':
+            self.score2 += 1
+        elif resultat == 'Egalité':
+            self.score1 += 0.5
+            self.score2 += 0.5
 
     def to_dict(self):
         return {
             'joueur1': self.joueur1.to_dict(),
+            'score1': self.score1,
             'joueur2': self.joueur2.to_dict(),
-            'resultat': self.resultat,
-            'id': self.id  # Ajout de l'identifiant lors de la sérialisation
+            'score2': self.score2
         }
+
+
 
 
 

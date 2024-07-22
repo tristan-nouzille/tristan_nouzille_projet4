@@ -107,24 +107,11 @@ class Controller:
             tour = Tour(f"Tour {i+1}", tournoi_obj.joueurs_inscrits)
             tour.commencer()
 
-            paires = tournoi_obj.generer_paires()
-            for index, (joueur1, joueur2) in enumerate(paires):
-                match = Match(joueur1, joueur2)
-                tour.ajouter_match(match)
-                self.view.afficher_match(tour.nom, match)
-
-                self.view.afficher_message(f"Match {match.id}: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+            for match in tour.matchs:
+                self.view.afficher_match(tour.nom, match.joueur1, match.joueur2)
 
                 resultat = input("Entrez le résultat du match (Joueur1, Joueur2, Egalité) : ")
                 match.definir_resultat(resultat)
-
-                if resultat == 'Joueur1':
-                    joueur1.score += 1
-                elif resultat == 'Joueur2':
-                    joueur2.score += 1
-                elif resultat == 'Egalité':
-                    joueur1.score += 0.5
-                    joueur2.score += 0.5
 
             tour.terminer()
             tournoi_obj.ajouter_tour(tour)
@@ -134,8 +121,6 @@ class Controller:
         self.view.afficher_message(f"Tournoi {tournoi_obj.nom} terminé !")
      else:
         self.view.afficher_erreur("Tournoi non trouvé.")
-
-
 
 
     def enregistrer_joueur(self, joueur):
