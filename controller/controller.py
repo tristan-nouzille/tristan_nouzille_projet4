@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from datetime import datetime
 from models.models import Joueur, Tournoi, Tour, Match
 from view.view import View
@@ -92,45 +93,50 @@ class Controller:
         self.view.afficher_tous_les_tournois(tournois)
 
     def lancer_tournoi(self):
-        tournois = self.charger_tous_les_tournois()
-        self.view.afficher_tous_les_tournois(tournois)
+     tournois = self.charger_tous_les_tournois()
+     self.view.afficher_tous_les_tournois(tournois)
 
-        nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
-        tournoi = next((t for t in tournois if t['nom'] == nom_tournoi), None)
+     nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
+     tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
 
-        if tournoi:
-            tournoi_obj = Tournoi.from_dict(tournoi)
-            self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
-            
-            for i in range(tournoi_obj.nombre_tours):
-                tour = Tour(f"Tour {i+1}")
-                tour.commencer()
+     if tournoi_data:
+        tournoi_obj = Tournoi.from_dict(tournoi_data)
+        self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
-                paires = tournoi_obj.generer_paires()
-                for (joueur1, joueur2) in paires:
-                    match = Match(joueur1, joueur2)
-                    self.view.afficher_match(joueur1, joueur2)
+        for i in range(len(tournoi_obj.tours), tournoi_obj.nombre_tours):
+            tour = Tour(f"Tour {i+1}", tournoi_obj.joueurs_inscrits)
+            tour.commencer()
 
-                    resultat = input("Entrez le résultat du match (Joueur1, Joueur2, Egalité) : ")
-                    match.definir_resultat(resultat)
-                    tour.ajouter_match(match)
+            paires = tournoi_obj.generer_paires()
+            for index, (joueur1, joueur2) in enumerate(paires):
+                match = Match(joueur1, joueur2)
+                tour.ajouter_match(match)
+                self.view.afficher_match(tour.nom, match)
 
-                    if resultat == 'Joueur1':
-                        joueur1.score += 1
-                    elif resultat == 'Joueur2':
-                        joueur2.score += 1
-                    elif resultat == 'Egalité':
-                        joueur1.score += 0.5
-                        joueur2.score += 0.5
+                self.view.afficher_message(f"Match {match.id}: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
 
-                tour.terminer()
-                tournoi_obj.ajouter_tour(tour)
+                resultat = input("Entrez le résultat du match (Joueur1, Joueur2, Egalité) : ")
+                match.definir_resultat(resultat)
 
-                self.enregistrer_tournoi(tournoi_obj.to_dict())  # Mettre à jour les données du tournoi
-                
-            self.view.afficher_message(f"Tournoi {tournoi_obj.nom} terminé !")
-        else:
-            self.view.afficher_erreur("Tournoi non trouvé.")
+                if resultat == 'Joueur1':
+                    joueur1.score += 1
+                elif resultat == 'Joueur2':
+                    joueur2.score += 1
+                elif resultat == 'Egalité':
+                    joueur1.score += 0.5
+                    joueur2.score += 0.5
+
+            tour.terminer()
+            tournoi_obj.ajouter_tour(tour)
+
+            self.enregistrer_tournoi(tournoi_obj.to_dict())
+
+        self.view.afficher_message(f"Tournoi {tournoi_obj.nom} terminé !")
+     else:
+        self.view.afficher_erreur("Tournoi non trouvé.")
+
+
+
 
     def enregistrer_joueur(self, joueur):
         joueur_data = joueur.to_dict()
@@ -173,6 +179,7 @@ class Controller:
         json.dump(tournois, f, indent=4)
 
 
+
     def charger_tous_les_tournois(self):
         try:
             with open(self.tournois_path, 'r') as f:
@@ -197,6 +204,224 @@ class Controller:
                 self.view.afficher_joueur_disponible(joueur)
         else:
             self.view.afficher_message("Aucun joueur disponible pour inscription.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
