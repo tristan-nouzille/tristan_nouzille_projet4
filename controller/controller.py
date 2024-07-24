@@ -37,46 +37,34 @@ class Controller:
                 self.view.afficher_erreur("Choix invalide. Veuillez entrer un numéro valide.")
                 
     def creer_tournoi(self):
-        self.view.afficher_message("Création d'un nouveau tournoi")
-        nom, lieu, date_debut, date_fin, description = self.view.saisir_tournoi()
+     self.view.afficher_message("Création d'un nouveau tournoi")
+     nom = input("Nom du tournoi : ")
+     lieu = input("Lieu du tournoi : ")
+     date_debut = datetime.strptime(input("Date de début (format JJ/MM/AAAA) : "), '%d/%m/%Y')
+     date_fin = datetime.strptime(input("Date de fin (format JJ/MM/AAAA) : "), '%d/%m/%Y')
+     description = input("Description du tournoi : ")
+     nombre_tours = 4  # Exemple : 4 tours, vous pouvez le rendre dynamique si nécessaire
 
-        joueurs_inscrits = []
-        joueurs_disponibles = self.charger_joueurs_inscrits()
+     tournoi = Tournoi(nom, lieu, date_debut, date_fin, nombre_tours, description)
 
-        self.afficher_joueurs_disponibles()
+    # Affichage et ajout des joueurs
+     joueurs_disponibles = self.charger_joueurs_inscrits()  # Correction ici
+     self.view.afficher_message("Joueurs disponibles pour inscription :")
+     for joueur in joueurs_disponibles:
+        self.view.afficher_joueur_disponible(joueur)
 
-        while True:
-            matricule_joueur = input("Entrez le matricule du joueur à ajouter (ou '0' pour arrêter d'ajouter des joueurs) : ").upper()
-            if matricule_joueur == "0":
-                break
-            else:
-                joueur_selectionne = next((joueur for joueur in joueurs_disponibles if joueur['matricule'] == matricule_joueur), None)
-                if joueur_selectionne:
-                    joueur_obj = Joueur.from_dict(joueur_selectionne)
-                    joueurs_inscrits.append(joueur_obj)
-                    joueurs_disponibles.remove(joueur_selectionne)
-                else:
-                    self.view.afficher_erreur("Matricule de joueur invalide.")
-                    ajouter_joueur = input("Voulez-vous ajouter un nouveau joueur ? (oui/non) : ")
-                    if ajouter_joueur.lower() == "oui":
-                        nom, prenom, date_naissance, matricule = self.view.saisir_joueur()
-                        joueur_obj = Joueur(nom, prenom, date_naissance, matricule)
-                        joueurs_inscrits.append(joueur_obj)
-                        self.enregistrer_joueur(joueur_obj)
-                    else:
-                        self.view.afficher_erreur("Veuillez entrer un matricule valide.")
+     while True:
+        matricule = input("Entrez le matricule du joueur à ajouter (ou '0' pour arrêter d'ajouter des joueurs) : ")
+        if matricule == '0':
+            break
+        joueur = next((j for j in joueurs_disponibles if j['matricule'] == matricule), None)
+        if joueur:
+            tournoi.ajouter_joueur(Joueur.from_dict(joueur))
+        else:
+            self.view.afficher_erreur("Joueur non trouvé.")
 
-        if len(joueurs_inscrits) < 2:
-            self.view.afficher_erreur("Le nombre de joueurs inscrits n'est pas suffisant pour un tournoi. Veuillez ajouter plus de joueurs.")
-            return
-
-        nombre_tours = self.calculer_nombre_tours(len(joueurs_inscrits))
-
-        tournoi = Tournoi(nom, lieu, date_debut, date_fin, nombre_tours, description)
-        tournoi.joueurs_inscrits = joueurs_inscrits
-
-        self.enregistrer_tournoi(tournoi)
-        self.view.afficher_message("Tournoi créé avec succès!")
+     self.enregistrer_tournoi(tournoi.to_dict())
+     self.view.afficher_message("Tournoi créé avec succès.")
 
     def ajouter_joueur(self):
         nom, prenom, date_naissance, matricule = self.view.saisir_joueur()
@@ -93,35 +81,58 @@ class Controller:
         self.view.afficher_tous_les_tournois(tournois)
 
     def lancer_tournoi(self):
-     tournois = self.charger_tous_les_tournois()
-     self.view.afficher_tous_les_tournois(tournois)
+        tournois = self.charger_tous_les_tournois()
+        self.view.afficher_tous_les_tournois(tournois)
 
-     nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
-     tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
+        nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
+        tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
 
-     if tournoi_data:
-        tournoi_obj = Tournoi.from_dict(tournoi_data)
-        self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
+        if tournoi_data:
+            tournoi_obj = Tournoi.from_dict(tournoi_data)
+            self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
-        for i in range(len(tournoi_obj.tours), tournoi_obj.nombre_tours):
-            tour = Tour(f"Tour {i+1}", tournoi_obj.joueurs_inscrits)
-            tour.commencer()
+            if len(tournoi_obj.tours) == 0:
+                # Mélanger les joueurs avant de commencer le premier tour
+                joueurs_melanges = tournoi_obj.joueurs_inscrits[:]
+                random.shuffle(joueurs_melanges)
+                self.view.afficher_message("Joueurs mélangés :")
+                for joueur in joueurs_melanges:
+                    self.view.afficher_joueur_disponible(joueur.to_dict())
+                    
+                # Commencer le premier tour avec les joueurs mélangés
+                tour = Tour("Tour 1", joueurs_melanges)
+                tour.commencer()
+                tournoi_obj.ajouter_tour(tour)
+                self.enregistrer_tournoi(tournoi_obj.to_dict())
+                self.view.afficher_message("=== Matchs du premier tour ===")
+                for match in tour.matchs:
+                    self.view.afficher_match(tour.nom, match.joueur1, match.joueur2)
+            else:
+                # Reprendre le tournoi en cours
+                dernier_tour = tournoi_obj.tours[-1]
 
-            for match in tour.matchs:
-                self.view.afficher_match(tour.nom, match.joueur1, match.joueur2)
-
-                resultat = input("Entrez le résultat du match (Joueur1, Joueur2, Egalité) : ")
-                match.definir_resultat(resultat)
-
-            tour.terminer()
-            tournoi_obj.ajouter_tour(tour)
-
-            self.enregistrer_tournoi(tournoi_obj.to_dict())
-
-        self.view.afficher_message(f"Tournoi {tournoi_obj.nom} terminé !")
-     else:
-        self.view.afficher_erreur("Tournoi non trouvé.")
-
+                # Vérifiez si tous les matchs du dernier tour ont un résultat
+                if all(match.resultat is not None for match in dernier_tour.matchs):
+                    # Créer un nouveau tour si le précédent est terminé
+                    self.view.afficher_message("Tous les matchs du dernier tour sont terminés. Création d'un nouveau tour.")
+                    joueurs_melanges = tournoi_obj.joueurs_inscrits[:]
+                    random.shuffle(joueurs_melanges)
+                    nouveau_tour_nom = f"Tour {len(tournoi_obj.tours) + 1}"
+                    nouveau_tour = Tour(nouveau_tour_nom, joueurs_melanges)
+                    nouveau_tour.commencer()
+                    tournoi_obj.ajouter_tour(nouveau_tour)
+                    self.enregistrer_tournoi(tournoi_obj.to_dict())
+                    self.view.afficher_message(f"=== Matchs de {nouveau_tour.nom} ===")
+                    for match in nouveau_tour.matchs:
+                        self.view.afficher_match(nouveau_tour.nom, match.joueur1, match.joueur2)
+                else:
+                    # Afficher les matchs restants du dernier tour
+                    self.view.afficher_message("Matchs en cours :")
+                    for match in dernier_tour.matchs:
+                        if match.resultat is None:
+                            self.view.afficher_match(dernier_tour.nom, match.joueur1, match.joueur2)
+        else:
+            self.view.afficher_erreur("Tournoi non trouvé.")
 
     def enregistrer_joueur(self, joueur):
         joueur_data = joueur.to_dict()
@@ -144,42 +155,35 @@ class Controller:
         except FileNotFoundError:
             return []
 
-    def enregistrer_tournoi(self, tournoi):
-     tournoi_data = tournoi if isinstance(tournoi, dict) else tournoi.to_dict()
+    def enregistrer_tournoi(self, tournoi_data):
      try:
-        with open(self.tournois_path, 'r') as f:
-            if os.stat(self.tournois_path).st_size == 0:
-                tournois = []
-            else:
-                tournois = json.load(f)
-     except (FileNotFoundError, json.JSONDecodeError):
-        tournois = []
-
-    # Supprimer le tournoi existant avec le même nom
-     tournois = [t for t in tournois if t['nom'] != tournoi_data['nom']]
-
-     tournois.append(tournoi_data)
-
-     with open(self.tournois_path, 'w') as f:
-        json.dump(tournois, f, indent=4)
-
+        # Charger les tournois existants
+        tournois = self.charger_tous_les_tournois()
+        
+        # Supprimer les anciens tournois avec le même nom
+        tournois = [t for t in tournois if t['nom'] != tournoi_data['nom']]
+        
+        # Ajouter le nouveau tournoi
+        tournois.append(tournoi_data)
+        
+        # Enregistrer les tournois mis à jour dans le fichier
+        with open(self.tournois_path, 'w') as f:
+            json.dump(tournois, f, indent=4)
+            
+     except Exception as e:
+        self.view.afficher_erreur(f"Erreur lors de l'enregistrement du tournoi : {e}")
 
 
     def charger_tous_les_tournois(self):
-        try:
-            with open(self.tournois_path, 'r') as f:
-                tournois = json.load(f)
-            return tournois
-        except FileNotFoundError:
-            return []
-
-    def calculer_nombre_tours(self, nombre_joueurs):
-        if nombre_joueurs < 4:
-            return 1
-        elif nombre_joueurs <= 8:
-            return 3
-        else:
-            return 4
+     try:
+        with open(self.tournois_path, 'r') as f:
+            tournois = json.load(f)
+        return tournois
+     except FileNotFoundError:
+         return []
+     except json.JSONDecodeError as e:
+        self.view.afficher_erreur(f"Erreur lors de la lecture du fichier de tournois : {e}")
+        return []
 
     def afficher_joueurs_disponibles(self):
         joueurs_disponibles = self.charger_joueurs_inscrits()
@@ -189,6 +193,1314 @@ class Controller:
                 self.view.afficher_joueur_disponible(joueur)
         else:
             self.view.afficher_message("Aucun joueur disponible pour inscription.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

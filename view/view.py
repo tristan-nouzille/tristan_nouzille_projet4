@@ -29,8 +29,13 @@ class View:
     def afficher_joueur_disponible(self, joueur):
         print(f"{joueur['prenom']} {joueur['nom']} (Matricule: {joueur['matricule']})")
 
-    def afficher_match(self, joueur1, joueur2):
-        print(f"Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+    def afficher_match(self, tour_nom, joueur1, joueur2):
+     if joueur2:
+        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+     else:
+        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} a un bye (aucun adversaire)")
+
+
 
     def saisir_date(self, label):
         while True:
@@ -58,6 +63,35 @@ class View:
 
     def afficher_match(self, tour_nom, joueur1, joueur2):
         print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
