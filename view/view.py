@@ -61,11 +61,15 @@ class View:
         description = input("Description du tournoi : ")
         return nom, lieu, date_debut, date_fin, description
 
-    def afficher_match(self, tour_nom, joueur1, joueur2):
-     if joueur2 is None:
-        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} passe automatiquement au tour suivant")
+    def afficher_match(self, tour_nom, match, lancer=False):
+     if match.joueur2 is None:
+        print(f"{tour_nom} - Match: {match.joueur1.prenom} {match.joueur1.nom} passe automatiquement au tour suivant")
      else:
-        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
+        if lancer:
+            print(f"{tour_nom} - Match: {match.joueur1.prenom} {match.joueur1.nom} (Pions {match.couleurs[0]}) vs {match.joueur2.prenom} {match.joueur2.nom} (Pions {match.couleurs[1]})")
+        else:
+            print(f"{tour_nom}   - Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}")
+
 
 
 

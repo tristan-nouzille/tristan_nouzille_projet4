@@ -118,7 +118,15 @@ class Match:
         self.joueur1 = joueur1
         self.joueur2 = joueur2
         self.resultat = None
-
+        self.couleurs = None #(joueur1_couleur, joueur2_couleur)
+        self.numero = None
+        
+    def lancer(self):
+        if random.choice([True, False]):
+            self.couleurs = ('Blanc', 'Noir')
+        else:
+            self.couleurs = ('Noir', 'Blanc')
+            
     def definir_resultat(self, resultat):
         self.resultat = resultat
 
@@ -126,7 +134,8 @@ class Match:
         return {
             'joueur1': self.joueur1.to_dict(),
             'joueur2': self.joueur2.to_dict() if self.joueur2 else None,
-            'resultat': self.resultat
+            'resultat': self.resultat,
+            'numero' : self.numero
         }
 
     @classmethod
@@ -135,6 +144,7 @@ class Match:
         joueur2 = Joueur.from_dict(data['joueur2']) if data['joueur2'] else None
         match = cls(joueur1, joueur2)
         match.resultat = data.get('resultat')
+        match.numero = data.get('numero')
         return match
 
 

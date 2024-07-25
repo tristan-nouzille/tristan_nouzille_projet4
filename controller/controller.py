@@ -83,56 +83,98 @@ class Controller:
     def lancer_tournoi(self):
      tournois = self.charger_tous_les_tournois()
      self.view.afficher_tous_les_tournois(tournois)
-
+ 
      nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
      tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
 
      if tournoi_data:
-         tournoi_obj = Tournoi.from_dict(tournoi_data)
-         self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
+        tournoi_obj = Tournoi.from_dict(tournoi_data)
+        self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
-         if len(tournoi_obj.tours) == 0:
-            # Mélanger les joueurs avant de commencer le premier tour
+        if len(tournoi_obj.tours) == 0:
+            # Mélanger les joueurs avant de commencer
             joueurs_melanges = tournoi_obj.joueurs_inscrits[:]
             random.shuffle(joueurs_melanges)
             self.view.afficher_message("Joueurs mélangés :")
             for joueur in joueurs_melanges:
                 self.view.afficher_joueur_disponible(joueur.to_dict())
-                
-            # Commencer le premier tour avec les joueurs mélangés
-            tour = Tour("Tour 1", joueurs_melanges)
-            self.creer_matchs_avec_bye(tour)
-            tournoi_obj.ajouter_tour(tour)
+
+            # Créer les matchs pour le tournoi round-robin
+            matchs = self.creer_matchs_round_robin(joueurs_melanges)
+            matchs_par_tour = 2  # Par exemple, 2 matchs par tour
+            tours = self.diviser_matchs_en_tours(matchs, matchs_par_tour)
+            
+            for tour in tours:
+                tournoi_obj.ajouter_tour(tour)
+
             self.enregistrer_tournoi(tournoi_obj.to_dict())
-            self.view.afficher_message("=== Matchs du premier tour ===")
-            for match in tour.matchs:
-                self.view.afficher_match(tour.nom, match.joueur1, match.joueur2)
-         else:
+            self.view.afficher_message("=== Matchs du tournoi ===")
+            for tour in tournoi_obj.tours:
+                self.view.afficher_message(f"=== {tour.nom} ===")
+                for match in tour.matchs:
+                    self.view.afficher_match(tour.nom, match)
+        else:
             # Reprendre le tournoi en cours
             dernier_tour = tournoi_obj.tours[-1]
 
             # Vérifiez si tous les matchs du dernier tour ont un résultat
             if all(match.resultat is not None for match in dernier_tour.matchs):
-                # Créer un nouveau tour si le précédent est terminé
-                self.view.afficher_message("Tous les matchs du dernier tour sont terminés. Création d'un nouveau tour.")
-                joueurs_melanges = tournoi_obj.joueurs_inscrits[:]
-                random.shuffle(joueurs_melanges)
-                nouveau_tour_nom = f"Tour {len(tournoi_obj.tours) + 1}"
-                nouveau_tour = Tour(nouveau_tour_nom, joueurs_melanges)
-                self.creer_matchs_avec_bye(nouveau_tour)
-                tournoi_obj.ajouter_tour(nouveau_tour)
-                self.enregistrer_tournoi(tournoi_obj.to_dict())
-                self.view.afficher_message(f"=== Matchs de {nouveau_tour.nom} ===")
-                for match in nouveau_tour.matchs:
-                    self.view.afficher_match(nouveau_tour.nom, match.joueur1, match.joueur2)
+                self.view.afficher_message("Tous les matchs sont terminés.")
             else:
-                # Afficher les matchs restants du dernier tour
                 self.view.afficher_message("Matchs en cours :")
                 for match in dernier_tour.matchs:
                     if match.resultat is None:
-                     self.view.afficher_match(dernier_tour.nom, match.joueur1, match.joueur2)
+                        self.view.afficher_match(dernier_tour.nom, match)
+        
+        # Demander quel match lancer
+        while True:
+            choix_tour = input("Entrez le numéro du tour à lancer (ou 'q' pour quitter) : ")
+            if choix_tour.lower() == 'q':
+                break
+
+            try:
+                choix_tour = int(choix_tour) - 1
+                tour = tournoi_obj.tours[choix_tour]
+
+                choix_match = input(f"Entrez le numéro du match du {tour.nom} à lancer : ")
+                choix_match = int(choix_match) - 1
+
+                if 0 <= choix_match < len(tour.matchs):
+                    self.lancer_match(tour, choix_match)
+                else:
+                    self.view.afficher_erreur("Numéro de match invalide.")
+            except (ValueError, IndexError):
+                self.view.afficher_erreur("Choix invalide.")
      else:
         self.view.afficher_erreur("Tournoi non trouvé.")
+
+
+    def creer_matchs_round_robin(self, joueurs):
+     matchs = []
+     nombre_joueurs = len(joueurs)
+     for i in range(nombre_joueurs):
+        for j in range(i + 1, nombre_joueurs):
+            matchs.append(Match(joueurs[i], joueurs[j]))
+     return matchs
+
+    
+    def diviser_matchs_en_tours(self, matchs, matchs_par_tour):
+     tours = []
+     nombre_de_tours = (len(matchs) + matchs_par_tour - 1) // matchs_par_tour  # Calculer le nombre de tours nécessaires
+
+     for i in range(nombre_de_tours):
+        debut = i * matchs_par_tour
+        fin = min((i + 1) * matchs_par_tour, len(matchs))
+        tour = Tour(f"Tour {i + 1}", [])  # Nommer automatiquement les tours
+        tour.matchs = matchs[debut:fin]
+
+        # Automatiser les numéros des matchs
+        for j, match in enumerate(tour.matchs):
+            match.numero = j + 1
+
+        tours.append(tour)
+     return tours
+
 
     def creer_matchs_avec_bye(self, tour):
      joueurs = tour.joueurs[:]
@@ -149,7 +191,12 @@ class Controller:
             joueur2 = joueurs.pop(0)
             matchs.append(Match(joueur1, joueur2))
      tour.matchs = matchs
-
+     
+    def lancer_match(self, tour, match_index):
+     match = tour.matchs[match_index]
+     match.lancer()
+     self.view.afficher_match(tour.nom, match, lancer=True)
+     
     def enregistrer_joueur(self, joueur):
         joueur_data = joueur.to_dict()
         try:
