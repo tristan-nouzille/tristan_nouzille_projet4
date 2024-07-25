@@ -40,8 +40,28 @@ class Controller:
      self.view.afficher_message("Création d'un nouveau tournoi")
      nom = input("Nom du tournoi : ")
      lieu = input("Lieu du tournoi : ")
-     date_debut = datetime.strptime(input("Date de début (format JJ/MM/AAAA) : "), '%d/%m/%Y')
-     date_fin = datetime.strptime(input("Date de fin (format JJ/MM/AAAA) : "), '%d/%m/%Y')
+
+    # Gestion de la saisie de la date de début
+     while True:
+        try:
+            date_debut_str = input("Date de début (format JJ/MM/AAAA) : ")
+            date_debut = datetime.strptime(date_debut_str, '%d/%m/%Y')
+            break
+        except ValueError:
+            self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
+
+    # Gestion de la saisie de la date de fin
+     while True:
+        try:
+            date_fin_str = input("Date de fin (format JJ/MM/AAAA) : ")
+            date_fin = datetime.strptime(date_fin_str, '%d/%m/%Y')
+            if date_fin < date_debut:
+                self.view.afficher_erreur("La date de fin ne peut pas être antérieure à la date de début. Veuillez entrer une nouvelle date de fin.")
+            else:
+                break
+        except ValueError:
+            self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
+
      description = input("Description du tournoi : ")
      nombre_tours = 4  # Exemple : 4 tours, vous pouvez le rendre dynamique si nécessaire
 
@@ -65,6 +85,7 @@ class Controller:
 
      self.enregistrer_tournoi(tournoi.to_dict())
      self.view.afficher_message("Tournoi créé avec succès.")
+
 
     def ajouter_joueur(self):
      nom = input("Nom du joueur : ")
