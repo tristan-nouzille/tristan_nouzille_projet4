@@ -235,8 +235,61 @@ class Controller:
      
     def lancer_match(self, tour, match_index):
      match = tour.matchs[match_index]
-     match.lancer()
+     match.lancer()  # Lance le match et détermine les couleurs
+    
+     # Affiche les informations du match et les couleurs
      self.view.afficher_match(tour.nom, match, lancer=True)
+     self.view.afficher_message("Résultat du match :")
+    
+    # Demander à l'utilisateur de saisir le résultat
+     while True:
+        resultat = input(f"Entrez le résultat du match {match.numero} (1 pour {match.joueur1.prenom} {match.joueur1.nom}, 2 pour {match.joueur2.prenom} {match.joueur2.nom}, N pour nul) : ").strip().upper()
+        if resultat in ['1', '2', 'N']:
+            break
+        else:
+            self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2, ou 'N' pour un match nul.")
+
+     if resultat == '1':
+        match.definir_resultat(f"{match.joueur1.matricule} gagne")
+        self.mettre_a_jour_scores(match.joueur1, match.joueur2, victoire=True)
+        self.view.afficher_message(f"Victoire de {match.joueur1.prenom} {match.joueur1.nom} ! Cela fait 1 point.")
+     elif resultat == '2':
+        match.definir_resultat(f"{match.joueur2.matricule} gagne")
+        self.mettre_a_jour_scores(match.joueur2, match.joueur1, victoire=True)
+        self.view.afficher_message(f"Victoire de {match.joueur2.prenom} {match.joueur2.nom} ! Cela fait 1 point.")
+     else:  # resultat == 'N'
+        match.definir_resultat("Nul")
+        self.mettre_a_jour_scores(match.joueur1, match.joueur2, victoire=False)
+        self.view.afficher_message("Match nul ! Chaque joueur reçoit 0.5 point.")
+
+     self.view.afficher_match(tour.nom, match)
+
+     
+    def mettre_a_jour_scores(self, joueur1, joueur2, victoire):
+     """Met à jour les scores des joueurs en fonction du résultat du match."""
+     if victoire:
+        joueur1_score = 1
+        joueur2_score = 0
+     else:  # match nul
+        joueur1_score = 0.5
+        joueur2_score = 0.5
+
+    # Charger les joueurs existants
+     joueurs = self.charger_joueurs_inscrits()
+    
+    # Mettre à jour les scores des joueurs
+     for joueur in joueurs:
+        if joueur['matricule'] == joueur1.matricule:
+            joueur['score'] = joueur.get('score', 0) + joueur1_score
+        elif joueur['matricule'] == joueur2.matricule:
+            joueur['score'] = joueur.get('score', 0) + joueur2_score
+
+    # Sauvegarder les joueurs mis à jour
+     with open(self.joueurs_path, 'w') as f:
+        json.dump(joueurs, f, indent=4)
+
+
+
      
     def enregistrer_joueur(self, joueur):
      joueur_data = joueur.to_dict()
