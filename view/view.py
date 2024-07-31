@@ -62,13 +62,192 @@ class View:
         return nom, lieu, date_debut, date_fin, description
 
     def afficher_match(self, tour_nom, match, lancer=False):
-     if match.joueur2 is None:
-        print(f"{tour_nom} - Match: {match.joueur1.prenom} {match.joueur1.nom} passe automatiquement au tour suivant")
-     else:
         if lancer:
-            print(f"{tour_nom} - Match: {match.joueur1.prenom} {match.joueur1.nom} (Pions {match.couleurs[0]}) vs {match.joueur2.prenom} {match.joueur2.nom} (Pions {match.couleurs[1]})")
+            print(f"Lancement du match {match.numero} du {tour_nom} : {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}")
+        elif match.resultat is not None:
+            gagnant = match.joueur1 if match.resultat == '1' else match.joueur2 if match.resultat == '2' else None
+            resultat = f"Résultat : {gagnant.prenom} {gagnant.nom}" if gagnant else "Résultat : Match nul"
+            print(f"{match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}. {resultat}")
         else:
-            print(f"{tour_nom}   - Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}")
+            print(f"{match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}. Résultat : Non joué")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
