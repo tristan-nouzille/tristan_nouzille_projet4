@@ -1,159 +1,37 @@
-import re
+
 from datetime import datetime
-import random
+
 
 class Joueur:
-    def __init__(self, nom, prenom, date_naissance, matricule):
+    def __init__(self, nom, prenom, date_naissance, matricule, points=0):
         self.nom = nom
         self.prenom = prenom
         self.date_naissance = date_naissance
         self.matricule = matricule
-        self.points = 0
-        
-    def ajouter_points(self, points):
-        self.points += points
-            
-    def validate_matricule(matricule):
-        
-        """Valide que le matricule suit le format XX00000 (deux lettres majuscules suivies de cinq chiffres)."""
-        pattern = r'^[A-Z]{2}\d{5}$'
-        return re.match(pattern, matricule) is not None
-    
-    def to_dict(self):
-        return {
-            'nom': self.nom,
-            'prenom': self.prenom,
-            'date_naissance': self.date_naissance.strftime('%d/%m/%Y'),  # Conversion en chaîne
-            'matricule': self.matricule
-        }
+        self.points = points
 
     @classmethod
     def from_dict(cls, data):
         return cls(
-            data['nom'],
-            data['prenom'],
-            datetime.strptime(data['date_naissance'], '%d/%m/%Y'),  # Conversion en datetime
-            data['matricule']
+            nom=data['nom'],
+            prenom=data['prenom'],
+            date_naissance=datetime.strptime(data['date_naissance'], '%d/%m/%Y'),
+            matricule=data['matricule'],
+            points=data.get('points', 0)
         )
 
-
-
-
-class Tournoi:
-    def __init__(self, nom, lieu, date_debut, date_fin, nombre_tours, description):
-        self.nom = nom
-        self.lieu = lieu
-        self.date_debut = date_debut
-        self.date_fin = date_fin
-        self.nombre_tours = nombre_tours
-        self.description = description
-        self.joueurs = []  # Initialisez l'attribut joueurs ici
-        self.tours = []  # Initialisez la liste des tours
-
-    def ajouter_joueur(self, joueur):
-        self.joueurs.append(joueur)
-
-    def ajouter_tour(self, tour):
-        self.tours.append(tour)
-
-    def to_dict(self):
-        # Convertir l'objet en dictionnaire pour l'enregistrement
-        return {
-            'nom': self.nom,
-            'lieu': self.lieu,
-            'date_debut': self.date_debut.isoformat(),  # Assurez-vous de convertir en format ISO
-            'date_fin': self.date_fin.isoformat(),
-            'nombre_tours': self.nombre_tours,
-            'description': self.description,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs],  # Ajoutez les joueurs ici
-            'tours': [tour.to_dict() for tour in self.tours]  # Ajoutez les tours ici
-        }
-
-    @classmethod
-    def from_dict(cls, data):
-        nom = data['nom']
-        lieu = data['lieu']
-        date_debut = datetime.fromisoformat(data['date_debut'])  # Modifiez ici
-        date_fin = datetime.fromisoformat(data['date_fin'])  # Modifiez ici
-        nombre_tours = data['nombre_tours']
-        description = data['description']
-        
-        tournoi = cls(nom, lieu, date_debut, date_fin, nombre_tours, description)
-        
-        # Ajoutez les joueurs et les tours si nécessaire
-        tournoi.joueurs = [Joueur.from_dict(j) for j in data.get('joueurs', [])]
-        tournoi.tours = [Tour.from_dict(t) for t in data.get('tours', [])]
-        
-        return tournoi
-
-
-
-
-
-
-    
-class Tour:
-    def __init__(self, nom, joueurs):
-        self.nom = nom
-        self.joueurs = joueurs
-        self.matchs = []
-
-    def commencer(self):
-        random.shuffle(self.joueurs)  # Mélanger les joueurs avant de créer les matchs
-        self.creer_matchs()
-        
-    def diviser_matchs_en_tours(self):
-        tours = []
-        joueurs_deja_joues = set()
-        tour_courant = Tour("Tour 1")
-        
-        for match in self.matchs:
-            joueur1, joueur2 = match.joueur1, match.joueur2
-            
-            # Vérifier si les joueurs ont déjà joué dans le tour courant
-            if joueur1 not in joueurs_deja_joues and joueur2 not in joueurs_deja_joues:
-                tour_courant.matchs.append(match)
-                joueurs_deja_joues.update([joueur1, joueur2])
-                
-                # Automatiser les numéros des matchs
-                match.numero = len(tour_courant.matchs)
-
-                # Si le tour contient 3 matchs, passer au tour suivant
-                if len(tour_courant.matchs) == 3:
-                    tours.append(tour_courant)
-                    tour_courant = Tour(f"Tour {len(tours) + 1}")
-                    joueurs_deja_joues.clear()  # Réinitialiser pour le prochain tour
-
-        # Ajouter le dernier tour s'il contient des matchs
-        if tour_courant.matchs:
-            tours.append(tour_courant)
-
-        return tours
-    def creer_matchs(self):
-        for i in range(0, len(self.joueurs), 2):
-            if i + 1 < len(self.joueurs):
-                joueur1 = self.joueurs[i]
-                joueur2 = self.joueurs[i + 1]
-                match = Match(joueur1, joueur2)
-                self.matchs.append(match)
-            else:
-                # Si nombre de joueurs est impair, le dernier joueur est laissé sans adversaire
-                joueur1 = self.joueurs[i]
-                match = Match(joueur1, None)
-                self.matchs.append(match)
-
     def to_dict(self):
         return {
             'nom': self.nom,
-            'matchs': [match.to_dict() for match in self.matchs]
+            'prenom': self.prenom,
+            'date_naissance': self.date_naissance.strftime('%d/%m/%Y'),
+            'matricule': self.matricule,
+            'points': self.points
         }
 
-    @classmethod
-    def from_dict(cls, data):
-        tour = cls(data['nom'], [])
-        tour.matchs = [Match.from_dict(m) for m in data.get('matchs', [])]
-        return tour
-
+    @staticmethod
+    def validate_matricule(matricule):
+        return len(matricule) == 7 and matricule[:2].isalpha() and matricule[2:].isdigit()
 
 
 
@@ -162,34 +40,104 @@ class Match:
         self.joueur1 = joueur1
         self.joueur2 = joueur2
         self.resultat = None
-        self.couleurs = None #(joueur1_couleur, joueur2_couleur)
-        self.numero = None
-        
+        self.blanc = None
+        self.noir = None
+
     def lancer(self):
-        if random.choice([True, False]):
-            self.couleurs = ('Blanc', 'Noir')
-        else:
-            self.couleurs = ('Noir', 'Blanc')
-            
-    def definir_resultat(self, resultat):
-        self.resultat = resultat
+        pass  # Logique de lancement du match à ajouter
+
+    @classmethod
+    def from_dict(cls, data):
+        match = cls(
+            joueur1=Joueur.from_dict(data['joueur1']),
+            joueur2=Joueur.from_dict(data['joueur2']) if data['joueur2'] else None
+        )
+        match.resultat = data.get('resultat')
+        match.blanc = Joueur.from_dict(data['blanc']) if data.get('blanc') else None
+        match.noir = Joueur.from_dict(data['noir']) if data.get('noir') else None
+        return match
 
     def to_dict(self):
         return {
             'joueur1': self.joueur1.to_dict(),
             'joueur2': self.joueur2.to_dict() if self.joueur2 else None,
             'resultat': self.resultat,
-            'numero' : self.numero
+            'blanc': self.blanc.to_dict() if self.blanc else None,
+            'noir': self.noir.to_dict() if self.noir else None
         }
+
+
+
+
+
+class Tour:
+    def __init__(self, nom, joueurs):
+        self.nom = nom
+        self.joueurs = joueurs
+        self.matchs = []
 
     @classmethod
     def from_dict(cls, data):
-        joueur1 = Joueur.from_dict(data['joueur1'])
-        joueur2 = Joueur.from_dict(data['joueur2']) if data['joueur2'] else None
-        match = cls(joueur1, joueur2)
-        match.resultat = data.get('resultat')
-        match.numero = data.get('numero')
-        return match
+        tour = cls(
+            nom=data['nom'],
+            joueurs=[Joueur.from_dict(j) for j in data['joueurs']]
+        )
+        tour.matchs = [Match.from_dict(m) for m in data['matchs']]
+        return tour
+
+    def to_dict(self):
+        return {
+            'nom': self.nom,
+            'joueurs': [joueur.to_dict() for joueur in self.joueurs],
+            'matchs': [match.to_dict() for match in self.matchs]
+        }
+
+
+
+class Tournoi:
+    def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
+        self.nom = nom
+        self.lieu = lieu
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.rounds = rounds
+        self.description = description
+        self.joueurs = []
+        self.tours = []
+
+    @classmethod
+    def from_dict(cls, data):
+        tournoi = cls(
+            nom=data['nom'],
+            lieu=data['lieu'],
+            date_debut=datetime.strptime(data['date_debut'], '%d/%m/%Y'),
+            date_fin=datetime.strptime(data['date_fin'], '%d/%m/%Y'),
+            rounds=data['rounds'],
+            description=data['description']
+        )
+        tournoi.joueurs = [Joueur.from_dict(j) for j in data['joueurs']]
+        tournoi.tours = [Tour.from_dict(t) for t in data['tours']]
+        return tournoi
+
+    def to_dict(self):
+        return {
+            'nom': self.nom,
+            'lieu': self.lieu,
+            'date_debut': self.date_debut.strftime('%d/%m/%Y'),
+            'date_fin': self.date_fin.strftime('%d/%m/%Y'),
+            'rounds': self.rounds,
+            'description': self.description,
+            'joueurs': [joueur.to_dict() for joueur in self.joueurs],
+            'tours': [tour.to_dict() for tour in self.tours]
+        }
+
+    def ajouter_joueur(self, joueur):
+        self.joueurs.append(joueur)
+
+    def ajouter_tour(self, tour):
+        self.tours.append(tour)
+
+
 
 
 

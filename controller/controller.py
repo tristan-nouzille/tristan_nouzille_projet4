@@ -6,12 +6,13 @@ from models.models import Joueur, Tournoi, Tour, Match
 from view.view import View
 
 class Controller:
-    def __init__(self, model, view):
-        self.model = model
+    def __init__(self, joueur_model, tournoi_model, view):
+        self.joueur_model = joueur_model
+        self.tournoi_model = tournoi_model
         self.view = view
         self.joueurs_path = os.path.join('data', 'Données_des_Participants.json')
         self.tournois_path = os.path.join('data', 'tournois.json')
-        # Assurez-vous que les dossiers existent
+
         os.makedirs(os.path.dirname(self.joueurs_path), exist_ok=True)
         os.makedirs(os.path.dirname(self.tournois_path), exist_ok=True)
 
@@ -19,7 +20,7 @@ class Controller:
         while True:
             self.view.afficher_menu_principal()
             choix = input("Entrez le numéro de votre choix : ")
-            
+
             if choix == "1":
                 self.creer_tournoi()
             elif choix == "2":
@@ -31,94 +32,88 @@ class Controller:
             elif choix == "5":
                 self.lancer_tournoi()
             elif choix == "6":
+                self.generer_rapport_joueurs()
+            elif choix == "7":
+                self.generer_rapport_tournois()
+            elif choix == "8":
+                self.generer_rapport_matchs        
+            elif choix == "9":
                 self.view.afficher_message("Merci d'avoir utilisé l'application de gestion des tournois d'échecs ! Au revoir !")
                 break
             else:
                 self.view.afficher_erreur("Choix invalide. Veuillez entrer un numéro valide.")
-                
+            
     def creer_tournoi(self):
      self.view.afficher_message("Création d'un nouveau tournoi")
      nom = input("Nom du tournoi : ")
      lieu = input("Lieu du tournoi : ")
 
-    # Gestion de la saisie de la date de début
-     while True:
-        try:
-            date_debut_str = input("Date de début (format JJ/MM/AAAA) : ")
-            date_debut = datetime.strptime(date_debut_str, '%d/%m/%Y')
-            break
-        except ValueError:
-            self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
-
-    # Gestion de la saisie de la date de fin
-     while True:
-        try:
-            date_fin_str = input("Date de fin (format JJ/MM/AAAA) : ")
-            date_fin = datetime.strptime(date_fin_str, '%d/%m/%Y')
-            if date_fin < date_debut:
-                self.view.afficher_erreur("La date de fin ne peut pas être antérieure à la date de début. Veuillez entrer une nouvelle date de fin.")
-            else:
-                break
-        except ValueError:
-            self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
+     # Gestion de la saisie de la date de début
+     date_debut = self.saisir_date("Date de début (format JJ/MM/AAAA) : ")
+     date_fin = self.saisir_date("Date de fin (format JJ/MM/AAAA) : ", date_debut)
 
      description = input("Description du tournoi : ")
-     nombre_tours = 4  # Exemple : 4 tours, vous pouvez le rendre dynamique si nécessaire
+     tournoi = Tournoi(nom, lieu, date_debut, date_fin, 4, description)
 
-     tournoi = Tournoi(nom, lieu, date_debut, date_fin, nombre_tours, description)
-
-    # Affichage et ajout des joueurs
      joueurs_disponibles = self.charger_joueurs_inscrits()
      self.view.afficher_message("Joueurs disponibles pour inscription :")
      for joueur in joueurs_disponibles:
         self.view.afficher_joueur_disponible(joueur)
 
      while True:
-        matricule = input("Entrez le matricule du joueur à ajouter (ou '0' pour arrêter d'ajouter des joueurs) : ")
+        matricule = input("Entrez le matricule du joueur à ajouter (ou '0' pour terminer l'ajout de joueurs) : ")
         if matricule == '0':
-            break
+            if len(tournoi.joueurs) < 5:
+                self.view.afficher_erreur("Nombre insuffisant de joueurs pour créer un tournoi de 4 rounds. Veuillez ajouter plus de joueurs.")
+                continue
+            else:
+                break
         joueur = next((j for j in joueurs_disponibles if j['matricule'] == matricule), None)
         if joueur:
-            tournoi.ajouter_joueur(Joueur.from_dict(joueur))  # Ajoutez le joueur au tournoi
+            tournoi.ajouter_joueur(Joueur.from_dict(joueur))
+            self.view.afficher_message(f"Joueur {joueur['prenom']} {joueur['nom']} ajouté.")
         else:
             self.view.afficher_erreur("Joueur non trouvé.")
 
-     self.creer_matchs_round_robin(tournoi, tournoi.joueurs)  # Assurez-vous que tournoi.joueurs existe
+     self.creer_matchs_round_robin(tournoi, tournoi.joueurs)
      self.enregistrer_tournoi(tournoi.to_dict())
      self.view.afficher_message("Tournoi créé avec succès.")
 
 
 
-
     def ajouter_joueur(self):
-     nom = input("Nom du joueur : ")
-     prenom = input("Prénom du joueur : ")
-     
-     while True:
-        try:
-            date_naissance_str= input("Date de début (format JJ/MM/AAAA) : ")
-            date_naissance = datetime.strptime(date_naissance_str, '%d/%m/%Y')
-            break
-        except ValueError:
-            self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
-          
-     while True:
-        matricule = input("Matricule du joueur (deux lettres majuscules suivies de cinq chiffres) : ")
-        if Joueur.validate_matricule(matricule):
-            if not self.matricule_existe(matricule):
-                break
+        nom = input("Nom du joueur : ")
+        prenom = input("Prénom du joueur : ")
+        date_naissance = self.saisir_date("Date de naissance (format JJ/MM/AAAA) : ")
+        
+        matricule = self.saisir_matricule()
+        joueur = Joueur(nom, prenom, date_naissance, matricule)
+        self.enregistrer_joueur(joueur)
+        self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès!")
+
+    def saisir_date(self, message, date_reference=None):
+        while True:
+            try:
+                date_str = input(message)
+                date = datetime.strptime(date_str, '%d/%m/%Y')
+                if date_reference and date < date_reference:
+                    self.view.afficher_erreur("La date ne peut pas être antérieure à la date de référence.")
+                return date
+            except ValueError:
+                self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
+
+    def saisir_matricule(self):
+        while True:
+            matricule = input("Matricule du joueur (deux lettres majuscules suivies de cinq chiffres) : ")
+            if Joueur.validate_matricule(matricule):
+                if not self.matricule_existe(matricule):
+                    return matricule
+                else:
+                    self.view.afficher_erreur("Le matricule existe déjà. Veuillez entrer un matricule unique.")
             else:
-                self.view.afficher_erreur("Le matricule existe déjà. Veuillez entrer un matricule unique.")
-        else:
-            self.view.afficher_erreur("Matricule invalide. Veuillez entrer un matricule valide au format XX00000.")
+                self.view.afficher_erreur("Matricule invalide. Veuillez entrer un matricule valide au format XX00000.")
 
-     joueur = Joueur(nom, prenom, date_naissance, matricule)
-     self.enregistrer_joueur(joueur)
-     self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès!")
-
-     
     def matricule_existe(self, matricule):
-        """Vérifie si un matricule existe déjà dans la liste des joueurs."""
         joueurs = self.charger_joueurs_inscrits()
         return any(joueur['matricule'] == matricule for joueur in joueurs)
 
@@ -131,184 +126,149 @@ class Controller:
         self.view.afficher_tous_les_tournois(tournois)
 
     def lancer_tournoi(self):
-     tournois = self.charger_tous_les_tournois()
-     self.view.afficher_tous_les_tournois(tournois)
+        tournois = self.charger_tous_les_tournois()
+        self.view.afficher_tous_les_tournois(tournois)
 
-     nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
-     tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
- 
-     if tournoi_data:
-        tournoi_obj = Tournoi.from_dict(tournoi_data)
-        self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
+        nom_tournoi = input("Entrez le nom du tournoi à lancer : ")
+        tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
 
-        for tour in tournoi_obj.tours:
-            self.view.afficher_message(f"=== {tour.nom} ===")
-            
-            # Pour chaque match dans le tour
-            for match in tour.matchs:
-                # Afficher l'état actuel de chaque match
-                self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'}. Résultat : {'Non joué' if match.resultat is None else match.resultat}")
-                
-                # Lancer le match
-                self.lancer_match(tour, tour.matchs.index(match))  
+        if tournoi_data:
+            tournoi_obj = Tournoi.from_dict(tournoi_data)
+            self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
-            self.view.afficher_message(f"Tous les matchs de {tour.nom} sont terminés.")
+            for tour in tournoi_obj.tours:
+                self.view.afficher_message(f"=== {tour.nom} ===")
 
-        self.view.afficher_message("Le tournoi est terminé !")
-     else:
-        self.view.afficher_erreur("Tournoi non trouvé.")
+                for match in tour.matchs:
+                    self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'}. Résultat : {'Non joué' if match.resultat is None else match.resultat}")
+                    self.lancer_match(tour, tour.matchs.index(match))
 
+                self.view.afficher_message(f"Tous les matchs de {tour.nom} sont terminés.")
 
-
+            self.view.afficher_message("Le tournoi est terminé !")
+        else:
+            self.view.afficher_erreur("Tournoi non trouvé.")
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
-     """Crée des matchs pour chaque joueur dans un format Round Robin."""
-     nombre_joueurs = len(joueurs)
-     for tour_num in range(nombre_joueurs - 1):
-        tour = Tour(f"Tour {tour_num + 1}", joueurs[:])  # Créez un nouveau tour
-        self.creer_matchs_avec_bye(tour)  # Créez les matchs pour le tour actuel
-        tournoi.ajouter_tour(tour)  # Ajoutez le tour au tournoi
-
+        nombre_joueurs = len(joueurs)
+        for tour_num in range(nombre_joueurs - 1):
+            tour = Tour(f"Tour {tour_num + 1}", joueurs[:])
+            self.creer_matchs_avec_bye(tour)
+            tournoi.ajouter_tour(tour)
 
     def creer_matchs_avec_bye(self, tour):
-     joueurs = tour.joueurs[:]
-     matchs = []
-     while joueurs:
-        if len(joueurs) % 2 == 1:
-            # Si le nombre de joueurs est impair, attribuer un bye
-            joueur1 = joueurs.pop(0)
-            matchs.append(Match(joueur1, None))  # Match avec bye
-            self.view.afficher_message(f"{joueur1.prenom} {joueur1.nom} passe automatiquement au tour suivant")
-        else:
-            # Créer les matchs pour les joueurs restants
-            joueur1 = joueurs.pop(0)
-            joueur2 = joueurs.pop(0)
-            matchs.append(Match(joueur1, joueur2))
-     tour.matchs = matchs
-     
+        joueurs = tour.joueurs[:]
+        matchs = []
+        while joueurs:
+            if len(joueurs) % 2 == 1:
+                joueur1 = joueurs.pop(0)
+                matchs.append(Match(joueur1, None))
+                self.view.afficher_message(f"{joueur1.prenom} {joueur1.nom} passe automatiquement au tour suivant")
+            else:
+                joueur1 = joueurs.pop(0)
+                joueur2 = joueurs.pop(0)
+                matchs.append(Match(joueur1, joueur2))
+        tour.matchs = matchs
+
     def lancer_match(self, tour, match_index):
-     match = tour.matchs[match_index]
-     self.view.afficher_message(f"Lancement du match {match_index + 1}...")  # Indiquer quel match est lancé
-     match.lancer()  # Lance le match et détermine les couleurs
-
-    # Affichez les informations du match et les couleurs
-     self.view.afficher_match(tour.nom, match, lancer=True)  # Affiche le match
-     self.view.afficher_message("Résultat du match :")
-
-    # Demander à l'utilisateur de saisir le résultat
-     while True:
-        resultat = input(f"Entrez le résultat du match {match_index + 1} (1 pour {match.joueur1.prenom} {match.joueur1.nom}, 2 pour {match.joueur2.prenom} {match.joueur2.nom}, N pour nul) : ").strip().upper()
-        if resultat in ['1', '2', 'N']:
-            break
+        match = tour.matchs[match_index]
+        self.view.afficher_message(f"Lancement du match {match_index + 1}...")
+        match.lancer()
+        self.view.afficher_match(tour.nom, match, lancer=True)
+        
+        if random.choice([True, False]):
+         blanc, noir = match.joueur1, match.joueur2
+        
         else:
-            self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2, ou 'N' pour un match nul.")
+         blanc, noir = match.joueur2, match.joueur1
 
-     if resultat == '1':
-        match.definir_resultat(f"{match.joueur1.prenom} {match.joueur1.nom} gagne")
-        self.mettre_a_jour_scores(match.joueur1, match.joueur2, victoire=True)
-        self.view.afficher_message(f"Victoire de {match.joueur1.prenom} {match.joueur1.nom} ! Cela fait 1 point.")
-     elif resultat == '2':
-        match.definir_resultat(f"{match.joueur2.prenom} {match.joueur2.nom} gagne")
-        self.mettre_a_jour_scores(match.joueur2, match.joueur1, victoire=True)
-        self.view.afficher_message(f"Victoire de {match.joueur2.prenom} {match.joueur2.nom} ! Cela fait 1 point.")
-     else:  # resultat == 'N'
-        match.definir_resultat("Nul")
-        self.mettre_a_jour_scores(match.joueur1, match.joueur2, victoire=False)
-        self.view.afficher_message("Match nul ! Chaque joueur reçoit 0.5 point.")
+        self.view.afficher_message(f"Lancement du match {match_index + 1}...")
+        self.view.afficher_message(f"{blanc.prenom} {blanc.nom} joue avec les pièces blanches.")
+        self.view.afficher_message(f"{noir.prenom} {noir.nom} joue avec les pièces noires.")
 
-    # Afficher le match final avec le résultat
-     self.view.afficher_match(tour.nom, match)  # Affiche le match avec le résultat final
-
-
-
-    def mettre_a_jour_scores(self, joueur1, joueur2, victoire):
-     """Met à jour les scores des joueurs en fonction du résultat du match."""
-     if victoire:
-        joueur1_score = 1
-        joueur2_score = 0
-     else:  # match nul
-        joueur1_score = 0.5
-        joueur2_score = 0.5
-
-    # Charger les joueurs existants
-     joueurs = self.charger_joueurs_inscrits()
-    
-    # Mettre à jour les scores des joueurs
-     for joueur in joueurs:
-        if joueur['matricule'] == joueur1.matricule:
-            joueur['score'] = joueur.get('score', 0) + joueur1_score
-        elif joueur['matricule'] == joueur2.matricule:
-            joueur['score'] = joueur.get('score', 0) + joueur2_score
-
-    # Sauvegarder les joueurs mis à jour
-     with open(self.joueurs_path, 'w') as f:
-        json.dump(joueurs, f, indent=4)
-
-
-
-     
-    def enregistrer_joueur(self, joueur):
-     joueur_data = joueur.to_dict()
-     try:
-        with open(self.joueurs_path, 'r') as f:
-            try:
-                joueurs = json.load(f)
-            except json.JSONDecodeError:
-                joueurs = []  # Si le fichier est corrompu, initialiser avec une liste vide
-     except FileNotFoundError:
-        joueurs = []
-
-     joueurs.append(joueur_data)
-
-     with open(self.joueurs_path, 'w') as f:
-        json.dump(joueurs, f, indent=4)
+        match.lancer()  # Logique de lancement du match
+        self.view.afficher_match(tour.nom, match, lancer=True)
+        while True:
+            resultat = input(f"Entrez le résultat du match {match_index + 1} (1 pour {match.joueur1.prenom} {match.joueur1.nom}, 2 pour {match.joueur2.prenom} {match.joueur2.nom}, N pour nul) : ").strip().upper()
+            if resultat in ['1', '2', 'N']:
+                break
+            else:
+                self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2 ou 'N' pour un match nul.")
+                
+        self.view.afficher_message(f"Match terminé : {match.resultat}") 
+         
+        if resultat == '1':
+            match.resultat = f"{match.joueur1.prenom} {match.joueur1.nom} gagne"
+        elif resultat == '2':
+            match.resultat = f"{match.joueur2.prenom} {match.joueur2.nom} gagne"
+        else:
+            match.resultat = "Match nul"
+        self.view.afficher_message(f"Match terminé : {match.resultat}")
 
     def charger_joueurs_inscrits(self):
-        try:
-            with open(self.joueurs_path, 'r') as f:
-                joueurs = json.load(f)
-            return joueurs
-        except FileNotFoundError:
+        if not os.path.exists(self.joueurs_path):
             return []
+        with open(self.joueurs_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-    def enregistrer_tournoi(self, tournoi_data):
-     try:
-        # Charger les tournois existants
-        tournois = self.charger_tous_les_tournois()
-        
-        # Supprimer les anciens tournois avec le même nom
-        tournois = [t for t in tournois if t['nom'] != tournoi_data['nom']]
-        
-        # Ajouter le nouveau tournoi
-        tournois.append(tournoi_data)
-        
-        # Enregistrer les tournois mis à jour dans le fichier
-        with open(self.tournois_path, 'w') as f:
-            json.dump(tournois, f, indent=4)
-            
-     except Exception as e:
-        self.view.afficher_erreur(f"Erreur lors de l'enregistrement du tournoi : {e}")
-
+    def enregistrer_joueur(self, joueur):
+        joueurs = self.charger_joueurs_inscrits()
+        joueurs.append(joueur.to_dict())
+        with open(self.joueurs_path, 'w', encoding='utf-8') as f:
+            json.dump(joueurs, f, ensure_ascii=False, indent=4)
 
     def charger_tous_les_tournois(self):
-     try:
-        with open(self.tournois_path, 'r') as f:
-            tournois = json.load(f)
-        return tournois
-     except FileNotFoundError:
-         return []
-     except json.JSONDecodeError as e:
-        self.view.afficher_erreur(f"Erreur lors de la lecture du fichier de tournois : {e}")
-        return []
+        if not os.path.exists(self.tournois_path):
+            return []
+        with open(self.tournois_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-    def afficher_joueurs_disponibles(self):
-        joueurs_disponibles = self.charger_joueurs_inscrits()
-        if joueurs_disponibles:
-            self.view.afficher_message("Joueurs disponibles pour inscription :")
-            for joueur in joueurs_disponibles:
-                self.view.afficher_joueur_disponible(joueur)
-        else:
-            self.view.afficher_message("Aucun joueur disponible pour inscription.")
+    def enregistrer_tournoi(self, tournoi_dict):
+        tournois = self.charger_tous_les_tournois()
+        tournois.append(tournoi_dict)
+        with open(self.tournois_path, 'w', encoding='utf-8') as f:
+            json.dump(tournois, f, ensure_ascii=False, indent=4)
+            
+    def afficher_tous_les_joueurs(self):
+        joueurs = self.charger_joueurs_inscrits()
+        self.view.afficher_tous_les_joueurs(joueurs)
+              
+    def generer_rapport_joueurs(self):
+     joueurs = self.charger_joueurs_inscrits()
+     if not joueurs:
+        self.view.afficher_message("Aucun joueur inscrit.")
+        return
+     self.view.afficher_message("Rapport des Joueurs :")
+     for joueur in joueurs:
+        self.view.afficher_message(f"{joueur['matricule']} - {joueur['prenom']} {joueur['nom']} - {joueur['date_naissance']}")
+     self.view.afficher_message(f"Total de joueurs : {len(joueurs)}")
+     
+    def generer_rapport_tournois(self):
+     tournois = self.charger_tous_les_tournois()
+     if not tournois:
+        self.view.afficher_message("Aucun tournoi enregistré.")
+        return
+     self.view.afficher_message("Rapport des Tournois :")
+     for tournoi in tournois:
+        self.view.afficher_message(f"{tournoi['nom']} - {tournoi['lieu']} - Du {tournoi['date_debut']} au {tournoi['date_fin']} - {len(tournoi['joueurs'])} joueurs inscrits")
+     self.view.afficher_message(f"Total de tournois : {len(tournois)}")
+     
+    def generer_rapport_matchs(self, nom_tournoi):
+     tournois = self.charger_tous_les_tournois()
+     tournoi_data = next((t for t in tournois if t['nom'] == nom_tournoi), None)
+
+     if not tournoi_data:
+        self.view.afficher_message("Tournoi non trouvé.")
+        return
+    
+     tournoi_obj = Tournoi.from_dict(tournoi_data)
+     self.view.afficher_message(f"Rapport des Matchs pour le Tournoi : {tournoi_obj.nom}")
+    
+     for tour in tournoi_obj.tours:
+        self.view.afficher_message(f"=== {tour.nom} ===")
+        for match in tour.matchs:
+            resultat = match.resultat if match.resultat else "Non joué"
+            self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'} - Résultat: {resultat}")
 
 
 

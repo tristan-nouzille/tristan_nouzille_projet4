@@ -1,75 +1,53 @@
-# views/view.py
-from datetime import datetime
 class View:
-    def afficher_menu_principal(self):
-        print("=== Menu Principal ===")
-        print("1. Créer un tournoi")
+    @staticmethod
+    def afficher_menu_principal():
+        print("=== Gestion des Tournois d'Échecs ===")
+        print("1. Créer un nouveau tournoi")
         print("2. Ajouter un joueur")
         print("3. Afficher tous les joueurs")
         print("4. Afficher tous les tournois")
         print("5. Lancer un tournoi")
-        print("6. Quitter")
+        print("6. Générer un rapport des joueurs")
+        print("7. Générer un rapport des tournois")
+        print("8. Générer un rapport des matchs")
+        print("9. Quitter")
 
-    def afficher_message(self, message):
+    @staticmethod
+    def afficher_message(message):
         print(message)
 
-    def afficher_erreur(self, message):
-        print(f"Erreur: {message}")
+    @staticmethod
+    def afficher_erreur(message):
+        print(f"Erreur : {message}")
 
-    def afficher_tous_les_joueurs(self, joueurs):
-        print("=== Liste des joueurs inscrits ===")
+    @staticmethod
+    def afficher_joueur_disponible(joueur):
+        print(f"Matricule: {joueur['matricule']}, Nom: {joueur['prenom']} {joueur['nom']}, Date de naissance: {joueur['date_naissance']}")
+
+    @staticmethod
+    def afficher_tous_les_joueurs(joueurs):
+        if not joueurs:
+            print("Aucun joueur trouvé.")
+            return
+        print("Liste de tous les joueurs :")
         for joueur in joueurs:
-            print(f"{joueur['prenom']} {joueur['nom']} (Matricule: {joueur['matricule']})")
+            print(f"{joueur['matricule']} - {joueur['prenom']} {joueur['nom']} - {joueur['date_naissance']} - Points : {joueur['points']}")
 
-    def afficher_tous_les_tournois(self, tournois):
-        print("=== Liste des tournois ===")
+    @staticmethod
+    def afficher_tous_les_tournois(tournois):
+        if not tournois:
+            print("Aucun tournoi trouvé.")
+            return
+        print("Liste de tous les tournois :")
         for tournoi in tournois:
-            print(f"{tournoi['nom']} à {tournoi['lieu']} (Début: {tournoi['date_debut']}, Fin: {tournoi['date_fin']})")
+            print(f"{tournoi['nom']} - {tournoi['lieu']} - Du {tournoi['date_debut']} au {tournoi['date_fin']}")
 
-    def afficher_joueur_disponible(self, joueur):
-        print(f"{joueur['prenom']} {joueur['nom']} (Matricule: {joueur['matricule']})")
-
-    def afficher_match(self, tour_nom, joueur1, joueur2):
-     if joueur2:
-        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} vs {joueur2.prenom} {joueur2.nom}")
-     else:
-        print(f"{tour_nom} - Match: {joueur1.prenom} {joueur1.nom} a un bye (aucun adversaire)")
-
-
-
-    def saisir_date(self, label):
-        while True:
-            try:
-                date_str = input(f"{label} (format JJ/MM/AAAA) : ")
-                date_obj = datetime.strptime(date_str, '%d/%m/%Y')
-                return date_obj
-            except ValueError:
-                self.afficher_erreur("Date invalide. Veuillez entrer une date au format JJ/MM/AAAA.")
-
-    def saisir_joueur(self):
-        nom = input("Nom du joueur : ")
-        prenom = input("Prénom du joueur : ")
-        date_naissance = self.saisir_date("Date de naissance")
-        matricule = input("Matricule du joueur : ").upper()
-        return nom, prenom, date_naissance, matricule
-
-    def saisir_tournoi(self):
-        nom = input("Nom du tournoi : ")
-        lieu = input("Lieu du tournoi : ")
-        date_debut = self.saisir_date("Date de début")
-        date_fin = self.saisir_date("Date de fin")
-        description = input("Description du tournoi : ")
-        return nom, lieu, date_debut, date_fin, description
-
-    def afficher_match(self, tour_nom, match, lancer=False):
+    @staticmethod
+    def afficher_match(tour_nom, match, lancer=False):
         if lancer:
-            print(f"Lancement du match {match.numero} du {tour_nom} : {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}")
-        elif match.resultat is not None:
-            gagnant = match.joueur1 if match.resultat == '1' else match.joueur2 if match.resultat == '2' else None
-            resultat = f"Résultat : {gagnant.prenom} {gagnant.nom}" if gagnant else "Résultat : Match nul"
-            print(f"{match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}. {resultat}")
+            print(f"Match en cours dans le tour '{tour_nom}': {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'}")
         else:
-            print(f"{match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom} {match.joueur2.nom}. Résultat : Non joué")
+            print(f"Match terminé: {match.resultat}")
 
 
 
