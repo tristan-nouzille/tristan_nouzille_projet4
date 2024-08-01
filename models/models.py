@@ -9,7 +9,13 @@ class Joueur:
         self.date_naissance = date_naissance
         self.matricule = matricule
         self.points = points
+        
+    def ajouter_points(self, points):
+        self.points += points  # Ajoute des points au total
 
+    def __str__(self):
+        return f"{self.prenom} {self.nom} - Points: {self.points}"
+    
     @classmethod
     def from_dict(cls, data):
         return cls(
@@ -104,7 +110,16 @@ class Tournoi:
         self.description = description
         self.joueurs = []
         self.tours = []
+        self.rencontres = set()
+        
+    def a_deja_joue(self, joueur1, joueur2):
+        return (joueur1.matricule, joueur2.matricule) in self.rencontres or (joueur2.matricule, joueur1.matricule) in self.rencontres
 
+    def ajouter_match(self, match):
+        self.matchs.append(match)
+        # Ajout de la rencontre à l'ensemble
+        self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
+  
     @classmethod
     def from_dict(cls, data):
         tournoi = cls(

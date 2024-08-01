@@ -150,11 +150,24 @@ class Controller:
             self.view.afficher_erreur("Tournoi non trouvé.")
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
-        nombre_joueurs = len(joueurs)
-        for tour_num in range(nombre_joueurs - 1):
-            tour = Tour(f"Tour {tour_num + 1}", joueurs[:])
-            self.creer_matchs_avec_bye(tour)
-            tournoi.ajouter_tour(tour)
+     nombre_joueurs = len(joueurs)
+     for tour_num in range(nombre_joueurs - 1):
+        tour = Tour(f"Tour {tour_num + 1}", joueurs[:])
+        matchs = []
+        for i in range(nombre_joueurs):
+            for j in range(i + 1, nombre_joueurs):
+                joueur1 = joueurs[i]
+                joueur2 = joueurs[j]
+
+                # Vérification si les joueurs se sont déjà rencontrés
+                if not tournoi.a_deja_joue(joueur1, joueur2):
+                    matchs.append(Match(joueur1, joueur2))
+                    tournoi.ajouter_match(Match(joueur1, joueur2))
+                    
+        # Ajout des matchs au tour
+        tour.matchs = matchs
+        tournoi.ajouter_tour(tour)
+
 
     def creer_matchs_avec_bye(self, tour):
         joueurs = tour.joueurs[:]
@@ -170,40 +183,55 @@ class Controller:
                 matchs.append(Match(joueur1, joueur2))
         tour.matchs = matchs
 
+
     def lancer_match(self, tour, match_index):
-        match = tour.matchs[match_index]
-        self.view.afficher_message(f"Lancement du match {match_index + 1}...")
-        match.lancer()
-        self.view.afficher_match(tour.nom, match, lancer=True)
-        
-        if random.choice([True, False]):
-         blanc, noir = match.joueur1, match.joueur2
-        
-        else:
-         blanc, noir = match.joueur2, match.joueur1
+     match = tour.matchs[match_index]
+     self.view.afficher_message(f"Lancement du match {match_index + 1}...")
 
-        self.view.afficher_message(f"Lancement du match {match_index + 1}...")
-        self.view.afficher_message(f"{blanc.prenom} {blanc.nom} joue avec les pièces blanches.")
-        self.view.afficher_message(f"{noir.prenom} {noir.nom} joue avec les pièces noires.")
+    # Tirage au sort pour déterminer les couleurs
+     if random.choice([True, False]):
+        blanc, noir = match.joueur1, match.joueur2
+     else:
+        blanc, noir = match.joueur2, match.joueur1
 
-        match.lancer()  # Logique de lancement du match
-        self.view.afficher_match(tour.nom, match, lancer=True)
-        while True:
-            resultat = input(f"Entrez le résultat du match {match_index + 1} (1 pour {match.joueur1.prenom} {match.joueur1.nom}, 2 pour {match.joueur2.prenom} {match.joueur2.nom}, N pour nul) : ").strip().upper()
-            if resultat in ['1', '2', 'N']:
-                break
-            else:
-                self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2 ou 'N' pour un match nul.")
-                
-        self.view.afficher_message(f"Match terminé : {match.resultat}") 
-         
-        if resultat == '1':
-            match.resultat = f"{match.joueur1.prenom} {match.joueur1.nom} gagne"
-        elif resultat == '2':
-            match.resultat = f"{match.joueur2.prenom} {match.joueur2.nom} gagne"
+    # Affichage des informations de match
+     self.view.afficher_message(f"{blanc.prenom} {blanc.nom} joue avec les pièces blanches.")
+     self.view.afficher_message(f"{noir.prenom} {noir.nom} joue avec les pièces noires.")
+
+    # Logique de lancement du match
+     match.lancer()
+     self.view.afficher_match(tour.nom, match, lancer=True)
+
+    # Demande du résultat du match
+     while True:
+        resultat = input(
+            f"Entrez le résultat du match {match_index + 1} "
+            f"(1 pour {match.joueur1.prenom} {match.joueur1.nom}, "
+            f"2 pour {match.joueur2.prenom} {match.joueur2.nom}, N pour nul) : "
+        ).strip().upper()
+        
+        if resultat in ['1', '2', 'N']:
+            break
         else:
-            match.resultat = "Match nul"
-        self.view.afficher_message(f"Match terminé : {match.resultat}")
+            self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2 ou 'N' pour un match nul.")
+
+    # Enregistrement du résultat du match
+     if resultat == '1':
+        match.resultat = f"{match.joueur1.prenom} {match.joueur1.nom} gagne"
+        match.joueur1.ajouter_points(1)  # Gagnant reçoit 1 point
+        match.joueur2.ajouter_points(0)  # Perdant reçoit 0 point
+     elif resultat == '2':
+        match.resultat = f"{match.joueur2.prenom} {match.joueur2.nom} gagne"
+        match.joueur2.ajouter_points(1)  # Gagnant reçoit 1 point
+        match.joueur1.ajouter_points(0)  # Perdant reçoit 0 point
+     else:
+        match.resultat = "Match nul"
+        match.joueur1.ajouter_points(0.5)  # Match nul, chaque joueur reçoit 0,5 point
+        match.joueur2.ajouter_points(0.5)
+
+     self.view.afficher_message(f"Match terminé : {match.resultat}")
+     self.view.afficher_message(f"{match.joueur1.prenom} {match.joueur1.nom} a maintenant {match.joueur1.points} points.")
+     self.view.afficher_message(f"{match.joueur2.prenom} {match.joueur2.nom} a maintenant {match.joueur2.points} points.")
 
     def charger_joueurs_inscrits(self):
         if not os.path.exists(self.joueurs_path):
