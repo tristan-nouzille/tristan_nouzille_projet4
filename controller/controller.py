@@ -151,6 +151,8 @@ class Controller:
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
      nombre_joueurs = len(joueurs)
+     
+     random.shuffle(joueurs)
      for tour_num in range(nombre_joueurs - 1):
         tour = Tour(f"Tour {tour_num + 1}", joueurs[:])
         matchs = []
@@ -171,6 +173,7 @@ class Controller:
 
     def creer_matchs_avec_bye(self, tour):
         joueurs = tour.joueurs[:]
+        random.shuffle(joueurs)
         matchs = []
         while joueurs:
             if len(joueurs) % 2 == 1:
