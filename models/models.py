@@ -110,13 +110,17 @@ class Tournoi:
         self.description = description
         self.joueurs = []
         self.tours = []
+        self.matchs = []  # Initialisation de l'attribut matchs
         self.rencontres = set()
         
+    def ajouter_joueur(self, joueur):
+        self.joueurs.append(joueur)  
+         
     def a_deja_joue(self, joueur1, joueur2):
         return (joueur1.matricule, joueur2.matricule) in self.rencontres or (joueur2.matricule, joueur1.matricule) in self.rencontres
 
     def ajouter_match(self, match):
-        self.matchs.append(match)
+        self.matchs.append(match)  # Utilisation de l'attribut matchs
         # Ajout de la rencontre à l'ensemble
         self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
   
@@ -132,6 +136,7 @@ class Tournoi:
         )
         tournoi.joueurs = [Joueur.from_dict(j) for j in data['joueurs']]
         tournoi.tours = [Tour.from_dict(t) for t in data['tours']]
+        tournoi.matchs = [Match.from_dict(m) for m in data['matchs']]  # Ajouter les matchs à partir des données
         return tournoi
 
     def to_dict(self):
@@ -143,11 +148,9 @@ class Tournoi:
             'rounds': self.rounds,
             'description': self.description,
             'joueurs': [joueur.to_dict() for joueur in self.joueurs],
-            'tours': [tour.to_dict() for tour in self.tours]
+            'tours': [tour.to_dict() for tour in self.tours],
+            'matchs': [match.to_dict() for match in self.matchs]  # Ajouter les matchs à la conversion
         }
-
-    def ajouter_joueur(self, joueur):
-        self.joueurs.append(joueur)
 
     def ajouter_tour(self, tour):
         self.tours.append(tour)

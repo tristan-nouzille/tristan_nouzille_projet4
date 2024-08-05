@@ -3,7 +3,7 @@ import os
 import random
 from datetime import datetime
 from models.models import Joueur, Tournoi, Tour, Match
-from view.view import View
+
 
 class Controller:
     def __init__(self, joueur_model, tournoi_model, view):
@@ -64,7 +64,8 @@ class Controller:
         matricule = input("Entrez le matricule du joueur à ajouter (ou '0' pour terminer l'ajout de joueurs) : ")
         if matricule == '0':
             if len(tournoi.joueurs) < 5:
-                self.view.afficher_erreur("Nombre insuffisant de joueurs pour créer un tournoi de 4 rounds. Veuillez ajouter plus de joueurs.")
+                self.view.afficher_erreur("Nombre insuffisant de joueurs pour créer un tournoi de 4 rounds."
+                                          " Veuillez ajouter plus de joueurs.")
                 continue
             else:
                 break
@@ -140,7 +141,9 @@ class Controller:
                 self.view.afficher_message(f"=== {tour.nom} ===")
 
                 for match in tour.matchs:
-                    self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'}. Résultat : {'Non joué' if match.resultat is None else match.resultat}")
+                    self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs"
+                                               f"{match.joueur2.prenom if match.joueur2 else 'Bye'}. Résultat :"
+                                               f"{'Non joué' if match.resultat is None else match.resultat}")
                     self.lancer_match(tour, tour.matchs.index(match))
 
                 self.view.afficher_message(f"Tous les matchs de {tour.nom} sont terminés.")
@@ -216,7 +219,8 @@ class Controller:
         if resultat in ['1', '2', 'N']:
             break
         else:
-            self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1, '2' pour la victoire du joueur 2 ou 'N' pour un match nul.")
+            self.view.afficher_erreur("Entrée invalide. Veuillez entrer '1' pour la victoire du joueur 1,"
+                                      " '2' pour la victoire du joueur 2 ou 'N' pour un match nul.")
 
     # Enregistrement du résultat du match
      if resultat == '1':
@@ -233,8 +237,10 @@ class Controller:
         match.joueur2.ajouter_points(0.5)
 
      self.view.afficher_message(f"Match terminé : {match.resultat}")
-     self.view.afficher_message(f"{match.joueur1.prenom} {match.joueur1.nom} a maintenant {match.joueur1.points} points.")
-     self.view.afficher_message(f"{match.joueur2.prenom} {match.joueur2.nom} a maintenant {match.joueur2.points} points.")
+     self.view.afficher_message(f"{match.joueur1.prenom} {match.joueur1.nom} "
+                                f"a maintenant {match.joueur1.points} points.")
+     self.view.afficher_message(f"{match.joueur2.prenom} {match.joueur2.nom} "
+                                f"a maintenant {match.joueur2.points} points.")
 
     def charger_joueurs_inscrits(self):
         if not os.path.exists(self.joueurs_path):
@@ -281,7 +287,8 @@ class Controller:
         return
      self.view.afficher_message("Rapport des Tournois :")
      for tournoi in tournois:
-        self.view.afficher_message(f"{tournoi['nom']} - {tournoi['lieu']} - Du {tournoi['date_debut']} au {tournoi['date_fin']} - {len(tournoi['joueurs'])} joueurs inscrits")
+        self.view.afficher_message(f"{tournoi['nom']} - {tournoi['lieu']} - Du {tournoi['date_debut']}"
+                                   f" au {tournoi['date_fin']} - {len(tournoi['joueurs'])} joueurs inscrits")
      self.view.afficher_message(f"Total de tournois : {len(tournois)}")
      
     def generer_rapport_matchs(self, nom_tournoi):
@@ -299,7 +306,8 @@ class Controller:
         self.view.afficher_message(f"=== {tour.nom} ===")
         for match in tour.matchs:
             resultat = match.resultat if match.resultat else "Non joué"
-            self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs {match.joueur2.prenom if match.joueur2 else 'Bye'} - Résultat: {resultat}")
+            self.view.afficher_message(f"Match: {match.joueur1.prenom} {match.joueur1.nom} vs"
+                                       f" {match.joueur2.prenom if match.joueur2 else 'Bye'} - Résultat: {resultat}")
 
 
 
