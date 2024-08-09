@@ -15,30 +15,6 @@ Ce projet est une application de gestion de tournois d'échecs qui permet de cr�
 ## Prérequis
 Avant de commencer, assurez-vous d'avoir Python 3.x installé sur votre machine. Vous pouvez vérifier cela en exécutant :
 
-```
-python --version
-
-```
-
-Here's the updated README.md file with installation instructions for Windows included:
-
-markdown
-Copier le code
-# Gestion des Tournois d'Échecs
-
-## Description
-Ce projet est une application de gestion de tournois d'échecs qui permet de créer des tournois, d'ajouter des joueurs, de lancer des matchs et de générer des rapports sur les joueurs et les tournois.
-
-## Fonctionnalités
-- Créer un nouveau tournoi
-- Ajouter des joueurs
-- Afficher tous les joueurs et tous les tournois
-- Lancer un tournoi et gérer les matchs
-- Générer des rapports pour les joueurs, les tournois et les matchs
-
-## Prérequis
-Avant de commencer, assurez-vous d'avoir Python 3.x installé sur votre machine. Vous pouvez vérifier cela en exécutant :
-
 ```bash
 python --version
 
@@ -70,11 +46,9 @@ python --version
   4. Lancez l'application :
 
   ```
-  python main.py
+  python3 main.py
   ```
 
-
-## Installation
 # Sur Windows
 
  1. Clonez le dépôt :
@@ -106,7 +80,7 @@ python main.py
 
 Lorsque l'application est lancée, un menu principal apparaîtra vous permettant de choisir parmi différentes options de gestion des tournois. Suivez les instructions à l'écran pour naviguer dans les différentes fonctionnalités.
 
-Style de Code
+# Style de Code
 Pour maintenir un code de qualité, utilisez flake8 pour vérifier le style de votre code. Voici comment l'installer et l'utiliser :
 
 Installation de flake8
