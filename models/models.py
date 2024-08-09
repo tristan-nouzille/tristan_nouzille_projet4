@@ -1,7 +1,6 @@
 
 from datetime import datetime
 
-
 class Joueur:
     def __init__(self, nom, prenom, date_naissance, matricule, points=0):
         self.nom = nom
@@ -11,11 +10,10 @@ class Joueur:
         self.points = points
         
     def ajouter_points(self, points):
-        self.points += points  # Ajoute des points au total
+     self.points += points  # Ajoute des points au total
 
     def __str__(self):
-        return f"{self.prenom} {self.nom} - Points: {self.points}"
-    
+     return f"{self.prenom} {self.nom} - Points: {self.points}"
     @classmethod
     def from_dict(cls, data):
         return cls(
@@ -38,8 +36,6 @@ class Joueur:
     @staticmethod
     def validate_matricule(matricule):
         return len(matricule) == 7 and matricule[:2].isalpha() and matricule[2:].isdigit()
-
-
 
 class Match:
     def __init__(self, joueur1, joueur2):
@@ -72,11 +68,7 @@ class Match:
             'noir': self.noir.to_dict() if self.noir else None
         }
 
-
-
-
-
-class Tour:
+class Round:
     def __init__(self, nom, joueurs):
         self.nom = nom
         self.joueurs = joueurs
@@ -84,12 +76,12 @@ class Tour:
 
     @classmethod
     def from_dict(cls, data):
-        tour = cls(
+        round = cls(
             nom=data['nom'],
             joueurs=[Joueur.from_dict(j) for j in data['joueurs']]
         )
-        tour.matchs = [Match.from_dict(m) for m in data['matchs']]
-        return tour
+        round.matchs = [Match.from_dict(m) for m in data['matchs']]
+        return round
 
     def to_dict(self):
         return {
@@ -97,8 +89,6 @@ class Tour:
             'joueurs': [joueur.to_dict() for joueur in self.joueurs],
             'matchs': [match.to_dict() for match in self.matchs]
         }
-
-
 
 class Tournoi:
     def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
@@ -109,21 +99,28 @@ class Tournoi:
         self.rounds = rounds
         self.description = description
         self.joueurs = []
-        self.tours = []
-        self.matchs = []  # Initialisation de l'attribut matchs
+        self.rounds_list = []
+        self.matchs = []
         self.rencontres = set()
+        self.scores = {} 
         
     def ajouter_joueur(self, joueur):
-        self.joueurs.append(joueur)  
-         
+        if any(joueur.matricule == j.matricule for j in self.joueurs):
+            raise ValueError(f"Le joueur avec le matricule {joueur.matricule} est déjà inscrit.")
+        self.joueurs.append(joueur)
+        self.scores[joueur.matricule] = 0
+
     def a_deja_joue(self, joueur1, joueur2):
-        return (joueur1.matricule, joueur2.matricule) in self.rencontres or (joueur2.matricule, joueur1.matricule) in self.rencontres
+     return ((joueur1.matricule, joueur2.matricule) in self.rencontres
+             or (joueur2.matricule, joueur1.matricule) in self.rencontres)
 
     def ajouter_match(self, match):
-        self.matchs.append(match)  # Utilisation de l'attribut matchs
-        # Ajout de la rencontre à l'ensemble
+        self.matchs.append(match)
         self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
-  
+        
+    def enregistrer_resultat(self, matricule, score):
+        if matricule in self.scores:
+            self.scores[matricule] += score
     @classmethod
     def from_dict(cls, data):
         tournoi = cls(
@@ -135,8 +132,8 @@ class Tournoi:
             description=data['description']
         )
         tournoi.joueurs = [Joueur.from_dict(j) for j in data['joueurs']]
-        tournoi.tours = [Tour.from_dict(t) for t in data['tours']]
-        tournoi.matchs = [Match.from_dict(m) for m in data['matchs']]  # Ajouter les matchs à partir des données
+        tournoi.rounds_list = [Round.from_dict(t) for t in data['rounds']]
+        tournoi.matchs = [Match.from_dict(m) for m in data['matchs']]
         return tournoi
 
     def to_dict(self):
@@ -148,12 +145,15 @@ class Tournoi:
             'rounds': self.rounds,
             'description': self.description,
             'joueurs': [joueur.to_dict() for joueur in self.joueurs],
-            'tours': [tour.to_dict() for tour in self.tours],
-            'matchs': [match.to_dict() for match in self.matchs]  # Ajouter les matchs à la conversion
+            'rounds': [round.to_dict() for round in self.rounds_list],
+            'matchs': [match.to_dict() for match in self.matchs]
         }
 
-    def ajouter_tour(self, tour):
-        self.tours.append(tour)
+    def ajouter_round(self, round):
+        self.rounds_list.append(round)
+
+
+
 
 
 
