@@ -46,6 +46,11 @@ class Controller:
 
     def creer_tournoi(self):
         self.view.afficher_message("Création d'un nouveau tournoi")
+
+        # Check if there are enough players
+        if len(self.charger_joueurs_inscrits()) < 5:
+            self.view.afficher_erreur("Vous devez inscrire au moins 5 joueurs avant de créer un tournoi.")
+            return
         nom = input("Nom du tournoi : ")
         lieu = input("Lieu du tournoi : ")
 
@@ -89,17 +94,23 @@ class Controller:
         print('')
 
     def ajouter_joueur(self):
-       nom = input("Nom du joueur : ")
-       prenom = input("Prénom du joueur : ")
-    
-       # Créer une date de référence pour 1960
-       date_reference = datetime(1960, 1, 1)
-       date_naissance = self.saisir_date("Date de naissance (format JJ/MM/AAAA) : ", date_reference)
+     while True:  # Boucle pour ajouter plusieurs joueurs
+        nom = input("Nom du joueur : ")
+        prenom = input("Prénom du joueur : ")
 
-       matricule = self.saisir_matricule()
-       joueur = Joueur(nom, prenom, date_naissance, matricule)
-       self.enregistrer_joueur(joueur)
-       self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès !")
+        date_reference = datetime(1960, 1, 1)
+        date_naissance = self.saisir_date("Date de naissance (format JJ/MM/AAAA) : ", date_reference)
+
+        matricule = self.saisir_matricule()
+        joueur = Joueur(nom, prenom, date_naissance, matricule)
+        self.enregistrer_joueur(joueur)
+        self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès !")
+
+        # Proposer d'ajouter un autre joueur
+        autre = input("Voulez-vous ajouter un autre joueur ? (o/n) : ")
+        if autre.lower() != 'o':
+            break  # Sortir de la boucle si l'utilisateur ne veut pas ajouter d'autres joueurs
+
 
 
 
