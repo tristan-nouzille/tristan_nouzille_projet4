@@ -9,8 +9,7 @@ class View:
         print("5. Lancer un tournoi")
         print("6. Générer un rapport des joueurs")
         print("7. Générer un rapport des tournois")
-        print("8. Générer un rapport des matchs")
-        print("9. Quitter")
+        print("8. Quitter")
 
     @staticmethod
     def afficher_message(message):
@@ -105,8 +104,11 @@ class View:
                     if 'matchs' in round:
                         for match in round['matchs']:
                             joueur1 = f"{match['joueur1']['nom']} {match['joueur1']['prenom']}"
-                            joueur2 = (f"{match['joueur2']['nom']} {match['joueur2']['prenom']}"
-                                        if match['joueur2'] else "Bye")
+                            joueur2 = (
+                                f"{match['joueur2']['nom']} {match['joueur2']['prenom']}"
+                                if match['joueur2'] 
+                                else "Bye"
+                            )
                             resultat = match.get('resultat', 'Non joué')
                             self.afficher_message(f"  Match: {joueur1} VS {joueur2}, Résultat: {resultat}")
             else:

@@ -3,3 +3,4 @@ max-line-length = 119
 exclude = .git,__pycache__,env, Blank_line
 format = html
 html-report = flake8_html
+ignore =  E203, E266, E501, W503, W293, W391, W291

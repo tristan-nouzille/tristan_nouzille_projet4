@@ -35,10 +35,8 @@ class Controller:
             elif choix == "6":
                 self.generer_rapport_joueurs()
             elif choix == "7":
-                self.generer_rapport_tournois()
+                self.generer_rapport_tournois()     
             elif choix == "8":
-                self.generer_rapport_matchs()       
-            elif choix == "9":
                 self.view.afficher_message("Merci d'avoir utilisé l'application Au revoir !")
                 break
             else:
@@ -72,15 +70,16 @@ class Controller:
             matricule = input("Entrez le matricule du joueur à ajouter (ou '0' pour terminer l'ajout de joueurs) : ")
             if matricule == '0':
                 if len(tournoi.joueurs) < 5:
-                    self.view.afficher_erreur("Nombre insuffisant de joueurs pour créer un tournoi de 4 rounds. Veuillez ajouter plus de joueurs.")
+                    self.view.afficher_erreur("Nombre insuffisant de joueurs pour créer un tournoi de 4 rounds.",
+                                              " Veuillez ajouter plus de joueurs.")
                     continue
                 else:
                     break
             joueur = next((j for j in joueurs_disponibles if j['matricule'] == matricule), None)
             if joueur:
              try:
-                tournoi.ajouter_joueur(Joueur.from_dict(joueur))
-                self.view.afficher_message(f"Joueur {joueur['prenom']} {joueur['nom']} ajouté.")
+                 tournoi.ajouter_joueur(Joueur.from_dict(joueur))
+                 self.view.afficher_message(f"Joueur {joueur['prenom']} {joueur['nom']} ajouté.")
              except ValueError as e:
                 self.view.afficher_erreur(str(e))
             else:
@@ -95,20 +94,20 @@ class Controller:
 
     def ajouter_joueur(self):
      while True:  # Boucle pour ajouter plusieurs joueurs
-        nom = input("Nom du joueur : ")
-        prenom = input("Prénom du joueur : ")
+         nom = input("Nom du joueur : ")
+         prenom = input("Prénom du joueur : ")
 
-        date_reference = datetime(1960, 1, 1)
-        date_naissance = self.saisir_date("Date de naissance (format JJ/MM/AAAA) : ", date_reference)
+         date_reference = datetime(1960, 1, 1)
+         date_naissance = self.saisir_date("Date de naissance (format JJ/MM/AAAA) : ", date_reference)
 
-        matricule = self.saisir_matricule()
-        joueur = Joueur(nom, prenom, date_naissance, matricule)
-        self.enregistrer_joueur(joueur)
-        self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès !")
+         matricule = self.saisir_matricule()
+         joueur = Joueur(nom, prenom, date_naissance, matricule)
+         self.enregistrer_joueur(joueur)
+         self.view.afficher_message(f"Joueur {prenom} {nom} ajouté avec succès !")
 
         # Proposer d'ajouter un autre joueur
-        autre = input("Voulez-vous ajouter un autre joueur ? (o/n) : ")
-        if autre.lower() != 'o':
+         autre = input("Voulez-vous ajouter un autre joueur ? (o/n) : ")
+         if autre.lower() != 'o':
             break  # Sortir de la boucle si l'utilisateur ne veut pas ajouter d'autres joueurs
 
 
@@ -116,22 +115,22 @@ class Controller:
 
     def saisir_date(self, message, date_reference=None):
      while True:
-        try:
-            date_str = input(message)
-            date = datetime.strptime(date_str, '%d/%m/%Y')
-            
+         try:
+             date_str = input(message)
+             date = datetime.strptime(date_str, '%d/%m/%Y')
+             
             # Vérification si la date est antérieure à 1960
-            if date.year < 1960:
+             if date.year < 1960:
                 self.view.afficher_erreur("L'année de naissance ne peut pas être inférieure à 1960.")
                 continue  # Recommencer la saisie
             
             # Vérification avec la date de référence (si fournie)
-            if date_reference and date < date_reference:
+             if date_reference and date < date_reference:
                 self.view.afficher_erreur("La date ne peut pas être antérieure à la date de référence.")
                 continue
             
-            return date
-        except ValueError:
+             return date
+         except ValueError:
             self.view.afficher_erreur("Format de date invalide. Veuillez entrer la date au format JJ/MM/AAAA.")
 
 
@@ -172,6 +171,7 @@ class Controller:
         tournoi_obj = Tournoi.from_dict(tournoi_data)
         self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
+        # Afficher tous les rounds et matchs
         for round in tournoi_obj.rounds_list:
             self.view.afficher_message(f"=== {round.nom} ===")
 
@@ -184,7 +184,17 @@ class Controller:
                 else:
                     self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} VS {joueur2}. Résultat : {resultat}")
 
-                # Lancer le match ici
+        # Confirmation avant de commencer les matchs
+        confirmation = input("Voulez-vous lancer les matchs ? (o/n) : ")
+        if confirmation.lower() != 'o':
+            self.view.afficher_message("Lancement des matchs annulé.")
+            return
+
+        # Lancer les matchs
+        for round in tournoi_obj.rounds_list:
+            self.view.afficher_message(f"=== Début de {round.nom} ===")
+
+            for match_index, match in enumerate(round.matchs):
                 self.lancer_match(round, match_index)
 
             self.view.afficher_message(f"Tous les matchs de {round.nom} sont terminés.")
@@ -192,6 +202,7 @@ class Controller:
         self.view.afficher_message("Le tournoi est terminé !")
      else:
         self.view.afficher_erreur("Tournoi non trouvé.")
+
 
    
 
@@ -238,11 +249,11 @@ class Controller:
                 matchs.append(Match(joueur1, joueur2))
         tour.matchs = matchs
 
-    def lancer_match(self, tour, match_index):
+    def lancer_match(self, tour, match_index, tournoi):  # Ajoutez le paramètre tournoi
      match = tour.matchs[match_index]  # Récupérer le match
      self.view.afficher_match(tour.nom, match, lancer=True)
 
-     # Tirage au sort pour déterminer les couleurs
+    # Tirage au sort pour déterminer les couleurs
      if random.choice([True, False]):
         blanc, noir = match.joueur1, match.joueur2
      else:
@@ -251,7 +262,7 @@ class Controller:
      if noir is None:  # Si l'un des joueurs est 'Bye'
         match.resultat = (1, 0)
         self.view.afficher_message(f"Le joueur {blanc.prenom} {blanc.nom} gagne automatiquement.")
-        
+
         # Mettre à jour le score
         self.scores[blanc.matricule] = self.scores.get(blanc.matricule, 0) + 1
         return
@@ -277,9 +288,14 @@ class Controller:
                 self.scores[blanc.matricule] = self.scores.get(blanc.matricule, 0) + 0.5
                 self.scores[noir.matricule] = self.scores.get(noir.matricule, 0) + 0.5
 
+            # Sauvegarde du tournoi avec les scores mis à jour
+            self.enregistrer_tournoi(tournoi)  # Remplacez tournoi_obj par tournoi
+
             break
         else:
             self.view.afficher_erreur("Entrée invalide. Veuillez entrer 1, 2 ou 0.")
+
+
 
 
     def charger_joueurs_inscrits(self):
@@ -302,12 +318,13 @@ class Controller:
 
     def enregistrer_tournoi(self, tournoi_dict):
      tournois = self.charger_tous_les_tournois()
-     # Enregistrer les scores dans le dictionnaire tournoi_dict
+    # Enregistrer les scores dans le dictionnaire tournoi_dict
      tournoi_dict['scores'] = self.scores  # Ajoute les scores au dictionnaire du tournoi
      tournois.append(tournoi_dict)
 
      with open(self.tournois_path, 'w') as file:
         json.dump(tournois, file, indent=4)
+
 
 
 
@@ -324,21 +341,60 @@ class Controller:
      self.view.afficher_rapport_joueurs(joueurs_tries)
      
     def generer_rapport_tournois(self):
-     """Génère et affiche un rapport des tournois."""
+     """Génère et affiche un rapport détaillé d'un tournoi sélectionné."""
      tournois = self.charger_tous_les_tournois()  # Charge tous les tournois
-     for tournoi in tournois:
-        self.view.afficher_message(f"Nom: {tournoi['nom']}, Lieu: {tournoi['lieu']}, Date de début: {tournoi['date_debut']}, Date de fin: {tournoi['date_fin']}, Description: {tournoi['description']}")
+ 
+     if not tournois:
+        self.view.afficher_erreur("Aucun tournoi disponible.")
+        return
+
+    # Affichage des tournois disponibles
+     self.view.afficher_message("Sélectionnez un tournoi :")
+     for index, tournoi in enumerate(tournois):
+        self.view.afficher_message(f"{index + 1}. {tournoi['nom']}")
+
+     while True:
+        choix = input("Entrez le numéro du tournoi à afficher (ou '0' pour annuler) : ")
+        if choix == '0':
+            self.view.afficher_message("Affichage annulé.")
+            return
         
-        self.view.afficher_message("Scores des joueurs :")
-        for matricule, score in tournoi['scores'].items():
-            self.view.afficher_message(f"  Matricule: {matricule}, Points: {score}")
-        
-     self.view.afficher_message("=== Fin du rapport des tournois ===")
+        try:
+            choix_index = int(choix) - 1
+            if 0 <= choix_index < len(tournois):
+                tournoi = tournois[choix_index]
+                break
+            else:
+                self.view.afficher_erreur("Numéro invalide. Veuillez sélectionner un numéro valide.")
+        except ValueError:
+            self.view.afficher_erreur("Entrée invalide. Veuillez entrer un numéro.")
+
+    # Afficher le rapport du tournoi sélectionné
+     self.view.afficher_message(f"Nom: {tournoi['nom']}, Lieu: {tournoi['lieu']}, Date de début: {tournoi['date_debut']}, Date de fin: {tournoi['date_fin']}, Description: {tournoi['description']}")
+
+     # Vérifiez si 'rounds' existe dans le tournoi
+     if 'rounds' in tournoi and tournoi['rounds']:
+        # Affichage des rounds et des matchs
+        for round in tournoi['rounds']:
+            self.view.afficher_message(f"=== {round['nom']} ===")
+            for match in round['matchs']:
+                joueur1 = match['joueur1']
+                joueur2 = match['joueur2'] if match['joueur2'] else 'Bye'
+                resultat = 'Non joué' if match['resultat'] is None else f"{joueur1['prenom']} {joueur1['nom']} ({'Blanc' if match['blanc']['matricule'] == joueur1['matricule'] else 'Noir'}) vs {joueur2['prenom']} {joueur2['nom']} ({'Blanc' if match['blanc']['matricule'] == joueur2['matricule'] else 'Noir'}) : {match['resultat'][0]}-{match['resultat'][1]}"
+                self.view.afficher_message(f"  Match: {joueur1['prenom']} {joueur1['nom']} VS {joueur2['prenom']} {joueur2['nom'] if joueur2 != 'Bye' else 'Bye'}, Résultat : {resultat}")
+     else:
+        self.view.afficher_message("Aucun round trouvé pour ce tournoi.")
+    
+    # Affichage des scores des joueurs
+     self.view.afficher_message("Scores des joueurs :")
+     joueurs_tries = sorted(tournoi['scores'].items(), key=lambda x: x[1], reverse=True)
+     for matricule, score in joueurs_tries:
+        joueur = next(j for j in tournoi['joueurs'] if j['matricule'] == matricule)
+        self.view.afficher_message(f"  {joueur['prenom']} {joueur['nom']} - Points: {score}")
+
+     self.view.afficher_message("=== Fin du rapport du tournoi ===")
 
 
-    def generer_rapport_matchs(self):
-        tournois = self.charger_tous_les_tournois()
-        self.view.afficher_rapport_matchs(tournois)
 
 
 
