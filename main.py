@@ -14,6 +14,7 @@ def main():
     controller = Controller(Joueur, Tournoi, view)
     controller.run() 
     
+    
 if __name__ == "__main__":
     main()
 
