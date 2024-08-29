@@ -78,7 +78,7 @@ python main.py
 
 ## Utilisation
 
-Lorsque l'application est lancée, un menu principal apparaîtra vous permettant de choisir parmi différentes options de gestion des tournois. Suivez les instructions à l'écran pour naviguer dans les différentes fonctionnalités.
+Lorsque l'application est lancée, un menu principal apparaîtra vous permettant de choisir parmi différentes options de gestion des tournois. Suivez les instructions à l'écran pour naviguer et découvrir les différentes fonctionnalités.
 
 # Style de Code
 Pour maintenir un code de qualité, utilisez flake8 pour vérifier le style de votre code. Voici comment l'installer et l'utiliser :
