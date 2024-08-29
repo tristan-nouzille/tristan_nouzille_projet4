@@ -33,7 +33,7 @@ class View:
         for joueur in joueurs:
             print(f" - {joueur['matricule']} - {joueur['prenom']} {joueur['nom']} - "
                   f"{joueur['date_naissance']}")
-            print('')
+        print('')
 
     @staticmethod
     def afficher_tous_les_tournois(tournois):
@@ -45,6 +45,15 @@ class View:
         for tournoi in tournois:
             print(f"{tournoi['nom']} - {tournoi['lieu']} - Du {tournoi['date_debut']} "
                   f"au {tournoi['date_fin']}")
+            
+    def afficher_rounds(self, tournoi):
+        for round in tournoi.rounds_list:
+            print(f"=== {round.nom} ===")
+            for match in round.matchs:
+                joueur1_nom = f"{match.joueur1.prenom} {match.joueur1.nom}" if match.joueur1 else "Bye"
+                joueur2_nom = f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else "Bye"
+                resultat = f"{match.resultat}" if match.resultat else "Non joué"
+                print(f"Match: {joueur1_nom} VS {joueur2_nom}. Résultat : {resultat}")
 
     @staticmethod
     def afficher_match(tour_nom, match, lancer=False):
@@ -113,8 +122,20 @@ class View:
                             self.afficher_message(f"  Match: {joueur1} VS {joueur2}, Résultat: {resultat}")
             else:
                 self.afficher_message("  Aucun round disponible.")
+                
+    def afficher_classement(self, tournoi):
+        """Affiche le classement des joueurs pour le tournoi donné avec un numéro de rang."""
+        print(f"Classement des joueurs pour le tournoi : {tournoi.nom}")
 
+        # Récupérer les joueurs triés par points en ordre décroissant
+        classement = sorted(tournoi.joueurs.values(), key=lambda j: j.points, reverse=True)
 
+        # Afficher chaque joueur avec son rang
+        for index, joueur in enumerate(classement, start=1):
+            # Afficher le rang, le nom du joueur et les points
+            print(f"{index} - {joueur.prenom} {joueur.nom} : {joueur.points:.1f} points")
+
+        
 
 
 
