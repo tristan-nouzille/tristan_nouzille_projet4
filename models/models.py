@@ -2,7 +2,6 @@ from datetime import datetime
 
 
 class Joueur:
-    
     def __init__(self, nom, prenom, date_naissance, matricule, points=0):
         self.nom = nom
         self.prenom = prenom
@@ -38,6 +37,7 @@ class Joueur:
     @staticmethod
     def validate_matricule(matricule):
         return len(matricule) == 7 and matricule[:2].isalpha() and matricule[2:].isdigit()
+
 
 
 class Match:
@@ -98,7 +98,6 @@ class Round:
 
 
 class Tournoi:
-    
     def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
         self.nom = nom
         self.lieu = lieu
@@ -106,17 +105,17 @@ class Tournoi:
         self.date_fin = date_fin
         self.rounds = rounds
         self.description = description
-        self.joueurs = []
+        self.joueurs = {}  # Utiliser un dictionnaire pour stocker les joueurs
         self.rounds_list = []
         self.matchs = []
         self.rencontres = set()
-        self.scores = {} 
+        self.scores = {}
         
     def ajouter_joueur(self, joueur):
-        if any(joueur.matricule == j.matricule for j in self.joueurs):
+        if joueur.matricule in self.joueurs:
             raise ValueError(f"Le joueur avec le matricule {joueur.matricule} est déjà inscrit.")
-        self.joueurs.append(joueur)
-        self.scores[joueur.matricule] = 0
+        self.joueurs[joueur.matricule] = joueur
+        self.scores[joueur.matricule] = joueur.points  # Initialise les scores avec les points du joueur
         
     def a_deja_joue(self, joueur1, joueur2):
         return ((joueur1.matricule, joueur2.matricule) in self.rencontres
@@ -126,9 +125,12 @@ class Tournoi:
         self.matchs.append(match)
         self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
         
-    def enregistrer_resultat(self, matricule, score):
-        if matricule in self.scores:
-            self.scores[matricule] += score
+    def enregistrer_resultat(self, matricule, points):
+        joueur = self.joueurs.get(matricule)
+        if joueur:
+            joueur.ajouter_points(points)  # Utiliser la méthode ajouter_points
+        else:
+            print(f"Joueur avec matricule {matricule} non trouvé.")
             
     @classmethod
     def from_dict(cls, data):
@@ -140,9 +142,14 @@ class Tournoi:
             rounds=data['rounds'],
             description=data['description']
         )
-        tournoi.joueurs = [Joueur.from_dict(j) for j in data['joueurs']]
-        tournoi.rounds_list = [Round.from_dict(t) for t in data['rounds']]
-        tournoi.matchs = [Match.from_dict(m) for m in data['matchs']]
+        tournoi.joueurs = {j['matricule']: Joueur.from_dict(j) for j in data['joueurs']}
+        
+        if 'rounds_list' in data:
+            tournoi.rounds_list = [Round.from_dict(r) for r in data['rounds_list']]
+        else:
+            tournoi.rounds_list = []  # Aucun round trouvé
+        
+        tournoi.matchs = [Match.from_dict(m) for m in data.get('matchs', [])]
         return tournoi
     
     def to_dict(self):
@@ -153,13 +160,15 @@ class Tournoi:
             'date_fin': self.date_fin.strftime('%d/%m/%Y'),
             'rounds': self.rounds,
             'description': self.description,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs],
-            'rounds_list': [round.to_dict() for round in self.rounds_list],  # Renommé pour éviter la duplication
-            'matchs': [match.to_dict() for match in self.matchs]
+            'joueurs': [joueur.to_dict() for joueur in self.joueurs.values()],
+            'rounds_list': [round.to_dict() for round in self.rounds_list],
+            'matchs': [match.to_dict() for match in self.matchs],
+            'scores': self.scores  # Assurez-vous que 'scores' est un dictionnaire ici
         }
-        
+    
     def ajouter_round(self, round):
         self.rounds_list.append(round)
+
 
 
 
