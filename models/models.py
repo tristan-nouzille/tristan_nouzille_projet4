@@ -98,7 +98,6 @@ class Round:
         self.matchs.append(match)
 
 
-
 class Tournoi:
     def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
         self.nom = nom
@@ -128,7 +127,6 @@ class Tournoi:
             # Ajouter la rencontre entre les deux joueurs
             self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
         self.matchs.append(match)
-
 
     def enregistrer_resultat(self, matricule, points):
         joueur = self.joueurs.get(matricule)
@@ -167,6 +165,7 @@ class Tournoi:
 
     def ajouter_round(self, round):
         self.rounds_list.append(round)
+
 
 
 

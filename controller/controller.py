@@ -185,7 +185,7 @@ class Controller:
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
         if isinstance(joueurs, dict):
-           joueurs = list(joueurs.values())  # Convertir les joueurs en liste à partir du dictionnaire
+            joueurs = list(joueurs.values())  # Convertir les joueurs en liste à partir du dictionnaire
 
         random.shuffle(joueurs)  # Mélanger les joueurs
         nombre_joueurs = len(joueurs)
@@ -194,11 +194,11 @@ class Controller:
         for round_index in range(tournoi.rounds):
             round_nom = f"Round {round_index + 1}"
             self.view.afficher_message(f"Création des matchs pour {round_nom}")
-        
-        # Créer un nouvel objet Round en passant le nom et les joueurs
+
+            # Créer un nouvel objet Round en passant le nom et les joueurs
             round_obj = Round(round_nom, joueurs[:])  # Passer une copie de la liste des joueurs
-  
-        # Si un joueur n'a pas eu d'adversaire au tour précédent, on l'ajoute au début de la liste
+
+            # Si un joueur n'a pas eu d'adversaire au tour précédent, on l'ajoute au début de la liste
             if joueur_sans_adversaire:
                 joueurs.append(joueur_sans_adversaire)
                 joueur_sans_adversaire = None  # Réinitialiser après l'avoir ajouté
@@ -206,30 +206,26 @@ class Controller:
             random.shuffle(joueurs)  # Re-mélanger à chaque round
             nombre_joueurs = len(joueurs)
 
-        # Créer les matchs deux à deux
-        for i in range(0, nombre_joueurs, 2):
-            joueur1 = joueurs[i]
-            joueur2 = joueurs[i + 1] if i + 1 < nombre_joueurs else None
+            # Créer les matchs deux à deux
+            for i in range(0, nombre_joueurs, 2):
+                joueur1 = joueurs[i]
+                joueur2 = joueurs[i + 1] if i + 1 < nombre_joueurs else None
 
-            if joueur2 is None:
-                # Si pas d'adversaire, sauvegarder pour le prochain round
-                joueur_sans_adversaire = joueur1
-                print(f"{joueur1.prenom} {joueur1.nom} n'a pas d'adversaire pour ce round.")
-                continue
+                if joueur2 is None:
+                    # Si pas d'adversaire, sauvegarder pour le prochain round
+                    joueur_sans_adversaire = joueur1
+                    print(f"{joueur1.prenom} {joueur1.nom} n'a pas d'adversaire pour ce round.")
+                    continue
 
-            # Créer le match et l'ajouter au round
-            match = Match(joueur1, joueur2)
-            round_obj.ajouter_match(match)
+                # Créer le match et l'ajouter au round
+                match = Match(joueur1, joueur2)
+                round_obj.ajouter_match(match)
 
-        tournoi.ajouter_round(round_obj)
+            tournoi.ajouter_round(round_obj)
 
-    # Après le dernier round, vérifier si un joueur est sans adversaire et l'afficher
+        # Après le dernier round, vérifier si un joueur est sans adversaire et l'afficher
         if joueur_sans_adversaire:
             print(f"{joueur_sans_adversaire.prenom} {joueur_sans_adversaire.nom} n'a pas joué dans le dernier round.")
-
-
-
-
 
     def lancer_match(self, round, index_match, tournoi):
         match = round.matchs[index_match]
@@ -250,7 +246,7 @@ class Controller:
                 except ValueError as e:
                     self.view.afficher_erreur(str(e))
         else:
-            self.view.afficher_message("Bye pour le joueur {}".format(match.joueur1.prenom))
+            self.view.afficher_message(f"Bye pour le joueur {match.joueur1.prenom}")
             tournoi.scores[match.joueur1.matricule] += 1
 
         self.view.afficher_message(f"Match {index_match + 1} terminé.")
@@ -292,6 +288,7 @@ class Controller:
             self.view.generer_rapport_tournois(tournois)
         else:
             self.view.afficher_erreur("Aucun tournoi à afficher.")
+
 
 
 
