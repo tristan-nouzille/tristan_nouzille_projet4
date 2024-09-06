@@ -1,7 +1,7 @@
 import json
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from models.models import Joueur, Tournoi, Round, Match
 
 
@@ -162,78 +162,45 @@ class Controller:
                     joueur2 = match.joueur2 if match.joueur2 else 'Bye'
                     resultat = 'Non joué' if match.resultat is None else match.resultat
                     if isinstance(joueur2, Joueur):
-                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} VS {joueur2.prenom} {joueur2.nom}. Résultat : {resultat}")
+                        couleur1 = 'Blanc' if match.couleur1 == 'w' else 'Noir'
+                        couleur2 = 'Blanc' if match.couleur2 == 'w' else 'Noir'
+                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} ({couleur1}) VS {joueur2.prenom} {joueur2.nom} ({couleur2}). Résultat : {resultat}")
                     else:
-                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} VS {joueur2}. Résultat : {resultat}")
+                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} ({'Blanc' if match.couleur1 == 'w' else 'Noir'}) VS {joueur2}. Résultat : {resultat}")
 
-            confirmation = input("Voulez-vous lancer les matchs ? (o/n) : ")
-            if confirmation.lower() != 'o':
-                self.view.afficher_message("Lancement des matchs annulé.")
-                return
-
-            for round in tournoi_obj.rounds_list:
-                self.view.afficher_message(f"=== Début de {round.nom} ===")
-
-                for match_index, match in enumerate(round.matchs):
-                    self.lancer_match(round, match_index, tournoi_obj)
-
-                self.view.afficher_message(f"Tous les matchs de {round.nom} sont terminés.")
-
-            self.view.afficher_message("Le tournoi est terminé !")
+            self.view.afficher_message(f"Fin du tournoi : {tournoi_obj.nom}")
         else:
             self.view.afficher_erreur("Tournoi non trouvé.")
 
+    def generer_rapport_joueurs(self):
+        joueurs = self.charger_joueurs_inscrits()
+        self.view.generer_rapport_joueurs(joueurs)
+
+    def generer_rapport_tournois(self):
+        tournois = self.charger_tous_les_tournois()
+        self.view.generer_rapport_tournois(tournois)
+
     def creer_matchs_round_robin(self, tournoi, joueurs):
-        if isinstance(joueurs, dict):
-            joueurs = list(joueurs.values())  # Convertir les joueurs en liste à partir du dictionnaire
+        tournoi.rounds_list = []
 
-        for round_index in range(tournoi.rounds):
-            round_nom = f"Round {round_index + 1}"
-            self.view.afficher_message(f"Création des matchs pour {round_nom}")
+        for i in range(tournoi.nb_rounds):
+            round_nom = f"Round {i + 1}"
+            round_date_debut = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+            round_date_fin = (datetime.now() + timedelta(hours=1)).strftime('%d/%m/%Y %H:%M:%S')
+            round_instance = Round(round_nom, round_date_debut, round_date_fin)
+            tournoi.rounds_list.append(round_instance)
 
-            round_obj = Round(round_nom, [])
-            joueurs_disponibles = joueurs[:]  # Liste des joueurs disponibles pour ce round
+            # Shuffle players for round robin
+            joueurs_melanges = joueurs[:]
+            random.shuffle(joueurs_melanges)
 
-            while len(joueurs_disponibles) > 1:
-                random.shuffle(joueurs_disponibles)
+            for j in range(0, len(joueurs_melanges) - 1, 2):
+                joueur1 = joueurs_melanges[j]
+                joueur2 = joueurs_melanges[j + 1]
 
-                joueur1 = joueurs_disponibles.pop(0)
-                joueur2 = joueurs_disponibles.pop(0) if joueurs_disponibles else None
-
-                match = Match(joueur1, joueur2)
-                round_obj.ajouter_match(match)
-
-            tournoi.ajouter_round(round_obj)
-
-            if len(joueurs_disponibles) == 1:
-                joueur_sans_adversaire = joueurs_disponibles[0]
-                self.view.afficher_message(f"{joueur_sans_adversaire.prenom} {joueur_sans_adversaire.nom} a eu un bye ce round.")
-
-        self.view.afficher_message("Tous les matchs ont été créés avec succès.")
-
-    def lancer_match(self, round, index_match, tournoi):
-        match = round.matchs[index_match]
-        self.view.afficher_message(f"Match {index_match + 1}: {match.joueur1.prenom} {match.joueur1.nom} VS {match.joueur2.prenom if match.joueur2 else 'Bye'}")
-
-        if match.joueur2:
-            while True:
-                try:
-                    score1 = int(input(f"Score pour {match.joueur1.prenom} {match.joueur1.nom} : "))
-                    score2 = int(input(f"Score pour {match.joueur2.prenom} {match.joueur2.nom} : "))
-                    if score1 < 0 or score2 < 0:
-                        raise ValueError("Les scores doivent être des entiers positifs.")
-                    match.resultat = (score1, score2)
-                    self.view.afficher_message(f"Match terminé : {match.joueur1.prenom} {match.joueur1.nom} {score1} - {score2} {match.joueur2.prenom} {match.joueur2.nom}")
-                    tournoi.scores[match.joueur1.matricule] += score1
-                    tournoi.scores[match.joueur2.matricule] += score2
-                    break
-                except ValueError as e:
-                    self.view.afficher_erreur(str(e))
-        else:
-            self.view.afficher_message(f"Bye pour le joueur {match.joueur1.prenom}")
-            tournoi.scores[match.joueur1.matricule] += 1
-
-        self.view.afficher_message(f"Match {index_match + 1} terminé.")
+                if joueur1 != joueur2:
+                    match = Match(joueur1, joueur2)
+                    round_instance.ajouter_match(match)
 
     def enregistrer_joueur(self, joueur):
         joueurs = self.charger_joueurs_inscrits()
@@ -259,19 +226,9 @@ class Controller:
                 return json.load(f)
         return []
 
-    def generer_rapport_joueurs(self):
-        joueurs = self.charger_joueurs_inscrits()
-        if joueurs:
-            self.view.generer_rapport_joueurs(joueurs)
-        else:
-            self.view.afficher_erreur("Aucun joueur à afficher.")
 
-    def generer_rapport_tournois(self):
-        tournois = self.charger_tous_les_tournois()
-        if tournois:
-            self.view.generer_rapport_tournois(tournois)
-        else:
-            self.view.afficher_erreur("Aucun tournoi à afficher.")
+
+
 
 
 

@@ -40,12 +40,12 @@ class Joueur:
 
 
 class Match:
-    def __init__(self, joueur1, joueur2):
+    def __init__(self, joueur1, joueur2, couleur1=None, couleur2=None):
         self.joueur1 = joueur1
         self.joueur2 = joueur2
         self.resultat = None
-        self.blanc = None
-        self.noir = None
+        self.blanc = couleur1 if isinstance(couleur1, Joueur) else None
+        self.noir = couleur2 if isinstance(couleur2, Joueur) else None
 
     def lancer(self):
         pass  # Logique de lancement du match à ajouter
@@ -54,11 +54,11 @@ class Match:
     def from_dict(cls, data):
         match = cls(
             joueur1=Joueur.from_dict(data['joueur1']),
-            joueur2=Joueur.from_dict(data['joueur2']) if data['joueur2'] else None
+            joueur2=Joueur.from_dict(data['joueur2']) if data['joueur2'] else None,
+            couleur1=Joueur.from_dict(data['blanc']) if data.get('blanc') else None,
+            couleur2=Joueur.from_dict(data['noir']) if data.get('noir') else None
         )
         match.resultat = data.get('resultat')
-        match.blanc = Joueur.from_dict(data['blanc']) if data.get('blanc') else None
-        match.noir = Joueur.from_dict(data['noir']) if data.get('noir') else None
         return match
 
     def to_dict(self):
@@ -165,6 +165,7 @@ class Tournoi:
 
     def ajouter_round(self, round):
         self.rounds_list.append(round)
+
 
 
 
