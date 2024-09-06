@@ -184,23 +184,52 @@ class Controller:
             self.view.afficher_erreur("Tournoi non trouvé.")
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
-        nombre_joueurs = len(joueurs)
-        joueurs_indices = list(range(nombre_joueurs))
-        random.shuffle(joueurs_indices)
-        joueurs = [joueurs[i] for i in joueurs_indices]
+        if isinstance(joueurs, dict):
+           joueurs = list(joueurs.values())  # Convertir les joueurs en liste à partir du dictionnaire
 
-        for round_index in range(tournoi.nb_rounds):
+        random.shuffle(joueurs)  # Mélanger les joueurs
+        nombre_joueurs = len(joueurs)
+        joueur_sans_adversaire = None  # Stocker le joueur sans adversaire
+
+        for round_index in range(tournoi.rounds):
             round_nom = f"Round {round_index + 1}"
             self.view.afficher_message(f"Création des matchs pour {round_nom}")
-            round_obj = Round(round_nom)
+        
+        # Créer un nouvel objet Round en passant le nom et les joueurs
+            round_obj = Round(round_nom, joueurs[:])  # Passer une copie de la liste des joueurs
+  
+        # Si un joueur n'a pas eu d'adversaire au tour précédent, on l'ajoute au début de la liste
+            if joueur_sans_adversaire:
+                joueurs.append(joueur_sans_adversaire)
+                joueur_sans_adversaire = None  # Réinitialiser après l'avoir ajouté
 
-            for i in range(0, nombre_joueurs, 2):
-                joueur1 = joueurs[i]
-                joueur2 = joueurs[i + 1] if i + 1 < nombre_joueurs else None
-                match = Match(joueur1, joueur2)
-                round_obj.ajouter_match(match)
+            random.shuffle(joueurs)  # Re-mélanger à chaque round
+            nombre_joueurs = len(joueurs)
 
-            tournoi.ajouter_round(round_obj)
+        # Créer les matchs deux à deux
+        for i in range(0, nombre_joueurs, 2):
+            joueur1 = joueurs[i]
+            joueur2 = joueurs[i + 1] if i + 1 < nombre_joueurs else None
+
+            if joueur2 is None:
+                # Si pas d'adversaire, sauvegarder pour le prochain round
+                joueur_sans_adversaire = joueur1
+                print(f"{joueur1.prenom} {joueur1.nom} n'a pas d'adversaire pour ce round.")
+                continue
+
+            # Créer le match et l'ajouter au round
+            match = Match(joueur1, joueur2)
+            round_obj.ajouter_match(match)
+
+        tournoi.ajouter_round(round_obj)
+
+    # Après le dernier round, vérifier si un joueur est sans adversaire et l'afficher
+        if joueur_sans_adversaire:
+            print(f"{joueur_sans_adversaire.prenom} {joueur_sans_adversaire.nom} n'a pas joué dans le dernier round.")
+
+
+
+
 
     def lancer_match(self, round, index_match, tournoi):
         match = round.matchs[index_match]

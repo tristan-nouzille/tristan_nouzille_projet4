@@ -93,6 +93,11 @@ class Round:
             'matchs': [match.to_dict() for match in self.matchs]
         }
 
+    def ajouter_match(self, match):
+        """Ajoute un match à la liste des matchs du round."""
+        self.matchs.append(match)
+
+
 
 class Tournoi:
     def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
@@ -119,8 +124,11 @@ class Tournoi:
                 or (joueur2.matricule, joueur1.matricule) in self.rencontres)
 
     def ajouter_match(self, match):
+        if match.joueur2 is not None:
+            # Ajouter la rencontre entre les deux joueurs
+            self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
         self.matchs.append(match)
-        self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
+
 
     def enregistrer_resultat(self, matricule, points):
         joueur = self.joueurs.get(matricule)
@@ -139,14 +147,9 @@ class Tournoi:
             rounds=data['rounds'],
             description=data['description']
         )
-        tournoi.joueurs = {j['matricule']: Joueur.from_dict(j) for j in data['joueurs']}
-
-        if 'rounds_list' in data:
-            tournoi.rounds_list = [Round.from_dict(r) for r in data['rounds_list']]
-        else:
-            tournoi.rounds_list = []  # Aucun round trouvé
-
-        tournoi.matchs = [Match.from_dict(m) for m in data.get('matchs', [])]
+        tournoi.joueurs = {matricule: Joueur.from_dict(j) for matricule, j in data['joueurs'].items()}
+        tournoi.rounds_list = [Round.from_dict(r) for r in data['rounds_list']]
+        tournoi.scores = data['scores']
         return tournoi
 
     def to_dict(self):
@@ -157,10 +160,9 @@ class Tournoi:
             'date_fin': self.date_fin.strftime('%d/%m/%Y'),
             'rounds': self.rounds,
             'description': self.description,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs.values()],
+            'joueurs': {matricule: joueur.to_dict() for matricule, joueur in self.joueurs.items()},
             'rounds_list': [round.to_dict() for round in self.rounds_list],
-            'matchs': [match.to_dict() for match in self.matchs],
-            'scores': self.scores  # Assurez-vous que 'scores' est un dictionnaire ici
+            'scores': self.scores
         }
 
     def ajouter_round(self, round):
