@@ -187,9 +187,6 @@ class Controller:
         if isinstance(joueurs, dict):
             joueurs = list(joueurs.values())  # Convertir les joueurs en liste à partir du dictionnaire
 
-        nombre_joueurs = len(joueurs)
-
-    # Assurer que chaque joueur joue contre tous les autres au moins une fois
         for round_index in range(tournoi.rounds):
             round_nom = f"Round {round_index + 1}"
             self.view.afficher_message(f"Création des matchs pour {round_nom}")
@@ -198,27 +195,21 @@ class Controller:
             joueurs_disponibles = joueurs[:]  # Liste des joueurs disponibles pour ce round
 
             while len(joueurs_disponibles) > 1:
-            # Mélanger les joueurs pour ce round
                 random.shuffle(joueurs_disponibles)
-            
+
                 joueur1 = joueurs_disponibles.pop(0)
                 joueur2 = joueurs_disponibles.pop(0) if joueurs_disponibles else None
 
-            # Créer le match et l'ajouter au round
                 match = Match(joueur1, joueur2)
                 round_obj.ajouter_match(match)
 
             tournoi.ajouter_round(round_obj)
 
-        # Afficher les joueurs restants qui n'ont pas pu jouer ce round
             if len(joueurs_disponibles) == 1:
                 joueur_sans_adversaire = joueurs_disponibles[0]
-                self.view.afficher_message(f"{joueur_sans_adversaire.prenom}"
-                                           f" {joueur_sans_adversaire.nom} a eu un bye ce round.")
-    
-        self.view.afficher_message("Tous les matchs ont été créés avec succès.")
- 
+                self.view.afficher_message(f"{joueur_sans_adversaire.prenom} {joueur_sans_adversaire.nom} a eu un bye ce round.")
 
+        self.view.afficher_message("Tous les matchs ont été créés avec succès.")
 
     def lancer_match(self, round, index_match, tournoi):
         match = round.matchs[index_match]
@@ -281,6 +272,7 @@ class Controller:
             self.view.generer_rapport_tournois(tournois)
         else:
             self.view.afficher_erreur("Aucun tournoi à afficher.")
+
 
 
 
