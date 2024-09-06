@@ -12,7 +12,6 @@ class Controller:
         self.view = view
         self.joueurs_path = os.path.join('data', 'Données_des_Participants.json')
         self.tournois_path = os.path.join('data', 'tournois.json')
-        self.scores = {}
         os.makedirs(os.path.dirname(self.joueurs_path), exist_ok=True)
         os.makedirs(os.path.dirname(self.tournois_path), exist_ok=True)
 
@@ -157,16 +156,16 @@ class Controller:
 
             for round in tournoi_obj.rounds_list:
                 self.view.afficher_message(f"=== {round.nom} ===")
-                for match_index, match in enumerate(round.matchs):
+                for match in round.matchs:
                     joueur1 = match.joueur1
                     joueur2 = match.joueur2 if match.joueur2 else 'Bye'
                     resultat = 'Non joué' if match.resultat is None else match.resultat
                     if isinstance(joueur2, Joueur):
-                        couleur1 = 'Blanc' if match.couleur1 == 'w' else 'Noir'
-                        couleur2 = 'Blanc' if match.couleur2 == 'w' else 'Noir'
+                        couleur1 = 'Blanc' if match.blanc == joueur1 else 'Noir'
+                        couleur2 = 'Blanc' if match.noir == joueur2 else 'Noir'
                         self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} ({couleur1}) VS {joueur2.prenom} {joueur2.nom} ({couleur2}). Résultat : {resultat}")
                     else:
-                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} ({'Blanc' if match.couleur1 == 'w' else 'Noir'}) VS {joueur2}. Résultat : {resultat}")
+                        self.view.afficher_message(f"Match: {joueur1.prenom} {joueur1.nom} (Blanc) VS {joueur2}. Résultat : {resultat}")
 
             self.view.afficher_message(f"Fin du tournoi : {tournoi_obj.nom}")
         else:
@@ -183,48 +182,57 @@ class Controller:
     def creer_matchs_round_robin(self, tournoi, joueurs):
         tournoi.rounds_list = []
 
-        for i in range(tournoi.nb_rounds):
+        if isinstance(joueurs, dict):
+            joueurs = list(joueurs.values())  # Convertir les joueurs en liste
+
+        if not isinstance(joueurs, list):
+            self.view.afficher_erreur(f"Erreur : 'joueurs' doit être une liste, mais c'est un {type(joueurs)}.")
+            return
+
+        for i in range(tournoi.rounds):
             round_nom = f"Round {i + 1}"
             round_date_debut = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
             round_date_fin = (datetime.now() + timedelta(hours=1)).strftime('%d/%m/%Y %H:%M:%S')
-            round_instance = Round(round_nom, round_date_debut, round_date_fin)
-            tournoi.rounds_list.append(round_instance)
+            round_instance = Round(round_nom, joueurs, round_date_debut, round_date_fin)
 
-            # Shuffle players for round robin
-            joueurs_melanges = joueurs[:]
-            random.shuffle(joueurs_melanges)
+            random.shuffle(joueurs)
 
-            for j in range(0, len(joueurs_melanges) - 1, 2):
-                joueur1 = joueurs_melanges[j]
-                joueur2 = joueurs_melanges[j + 1]
+            for j in range(0, len(joueurs), 2):
+                joueur1 = joueurs[j]
+                joueur2 = joueurs[j + 1] if j + 1 < len(joueurs) else None
+                match = Match(joueur1, joueur2)
+                round_instance.ajouter_match(match)
 
-                if joueur1 != joueur2:
-                    match = Match(joueur1, joueur2)
-                    round_instance.ajouter_match(match)
+            tournoi.ajouter_round(round_instance)
 
     def enregistrer_joueur(self, joueur):
         joueurs = self.charger_joueurs_inscrits()
         joueurs.append(joueur.to_dict())
-        with open(self.joueurs_path, 'w') as f:
-            json.dump(joueurs, f, indent=4)
+        self.sauvegarder_joueurs(joueurs)
 
     def charger_joueurs_inscrits(self):
         if os.path.exists(self.joueurs_path):
-            with open(self.joueurs_path, 'r') as f:
-                return json.load(f)
+            with open(self.joueurs_path, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        return []
+
+    def sauvegarder_joueurs(self, joueurs):
+        with open(self.joueurs_path, 'w', encoding='utf-8') as file:
+            json.dump(joueurs, file, ensure_ascii=False, indent=4)
+
+    def charger_tous_les_tournois(self):
+        if os.path.exists(self.tournois_path):
+            with open(self.tournois_path, 'r', encoding='utf-8') as file:
+                return json.load(file)
         return []
 
     def enregistrer_tournoi(self, tournoi_data):
         tournois = self.charger_tous_les_tournois()
         tournois.append(tournoi_data)
-        with open(self.tournois_path, 'w') as f:
-            json.dump(tournois, f, indent=4)
+        with open(self.tournois_path, 'w', encoding='utf-8') as file:
+            json.dump(tournois, file, ensure_ascii=False, indent=4)
 
-    def charger_tous_les_tournois(self):
-        if os.path.exists(self.tournois_path):
-            with open(self.tournois_path, 'r') as f:
-                return json.load(f)
-        return []
+
 
 
 

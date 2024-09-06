@@ -54,7 +54,7 @@ class Match:
     def from_dict(cls, data):
         match = cls(
             joueur1=Joueur.from_dict(data['joueur1']),
-            joueur2=Joueur.from_dict(data['joueur2']) if data['joueur2'] else None,
+            joueur2=Joueur.from_dict(data['joueur2']) if data.get('joueur2') else None,
             couleur1=Joueur.from_dict(data['blanc']) if data.get('blanc') else None,
             couleur2=Joueur.from_dict(data['noir']) if data.get('noir') else None
         )
@@ -72,30 +72,32 @@ class Match:
 
 
 class Round:
-    def __init__(self, nom, joueurs):
+    def __init__(self, nom, joueurs, date_debut=None, date_fin=None):
         self.nom = nom
-        self.joueurs = joueurs
-        self.matchs = []
-
-    @classmethod
-    def from_dict(cls, data):
-        round = cls(
-            nom=data['nom'],
-            joueurs=[Joueur.from_dict(j) for j in data['joueurs']]
-        )
-        round.matchs = [Match.from_dict(m) for m in data['matchs']]
-        return round
-
-    def to_dict(self):
-        return {
-            'nom': self.nom,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs],
-            'matchs': [match.to_dict() for match in self.matchs]
-        }
+        self.joueurs = joueurs  # Devrait être une liste d'objets Joueur
+        self.date_debut = date_debut
+        self.date_fin = date_fin
+        self.matchs = []  # Initialiser comme une liste vide de matchs
 
     def ajouter_match(self, match):
         """Ajoute un match à la liste des matchs du round."""
         self.matchs.append(match)
+
+    @classmethod
+    def from_dict(cls, data):
+        round_instance = cls(
+            nom=data['nom'],
+            joueurs=[Joueur.from_dict(j) for j in data['joueurs']]  # Assurer que joueurs sont des objets Joueur
+        )
+        round_instance.matchs = [Match.from_dict(m) for m in data['matchs']]
+        return round_instance
+
+    def to_dict(self):
+        return {
+            'nom': self.nom,
+            'joueurs': [joueur.to_dict() for joueur in self.joueurs],  # Assurer que to_dict est appelé sur des objets Joueur
+            'matchs': [match.to_dict() for match in self.matchs]
+        }
 
 
 class Tournoi:
@@ -107,7 +109,7 @@ class Tournoi:
         self.rounds = rounds
         self.description = description
         self.joueurs = {}  # Utiliser un dictionnaire pour stocker les joueurs
-        self.rounds_list = []
+        self.rounds_list = []  # Initialiser correctement rounds_list
         self.matchs = []
         self.rencontres = set()
         self.scores = {}
@@ -165,6 +167,9 @@ class Tournoi:
 
     def ajouter_round(self, round):
         self.rounds_list.append(round)
+
+
+
 
 
 
