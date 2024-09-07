@@ -40,79 +40,83 @@ class Joueur:
 
 
 class Match:
-    def __init__(self, joueur1, joueur2, couleur1=None, couleur2=None):
+    def __init__(self, joueur1, joueur2, blanc=None, noir=None):
         self.joueur1 = joueur1
         self.joueur2 = joueur2
         self.resultat = None
-        self.blanc = couleur1 if isinstance(couleur1, Joueur) else None
-        self.noir = couleur2 if isinstance(couleur2, Joueur) else None
-
-    def lancer(self):
-        pass  # Logique de lancement du match à ajouter
+        self.blanc = blanc if isinstance(blanc, Joueur) else joueur1  # Assurez-vous que blanc est un Joueur
+        self.noir = noir if isinstance(noir, Joueur) else joueur2      # Assurez-vous que noir est un Joueur
 
     @classmethod
     def from_dict(cls, data):
-        match = cls(
-            joueur1=Joueur.from_dict(data['joueur1']),
-            joueur2=Joueur.from_dict(data['joueur2']) if data.get('joueur2') else None,
-            couleur1=Joueur.from_dict(data['blanc']) if data.get('blanc') else None,
-            couleur2=Joueur.from_dict(data['noir']) if data.get('noir') else None
-        )
+        joueur1 = Joueur.from_dict(data['joueur1'])
+        joueur2 = Joueur.from_dict(data['joueur2']) if data.get('joueur2') else None
+        blanc = Joueur.from_dict(data['blanc']) if data.get('blanc') else joueur1
+        noir = Joueur.from_dict(data['noir']) if data.get('noir') else joueur2
+        match = cls(joueur1=joueur1, joueur2=joueur2, blanc=blanc, noir=noir)
         match.resultat = data.get('resultat')
         return match
 
     def to_dict(self):
+        def safe_to_dict(obj):
+            return obj.to_dict() if isinstance(obj, Joueur) else None
+
         return {
-            'joueur1': self.joueur1.to_dict(),
+            'joueur1': self.joueur1.to_dict() if self.joueur1 else None,
             'joueur2': self.joueur2.to_dict() if self.joueur2 else None,
             'resultat': self.resultat,
-            'blanc': self.blanc.to_dict() if self.blanc else None,
-            'noir': self.noir.to_dict() if self.noir else None
+            'blanc': safe_to_dict(self.blanc),
+            'noir': safe_to_dict(self.noir)
         }
 
 
 class Round:
-    def __init__(self, nom, joueurs, date_debut=None, date_fin=None):
+    def __init__(self, nom, date_debut, date_fin, match_list=None):
         self.nom = nom
-        self.joueurs = joueurs  # Devrait être une liste d'objets Joueur
         self.date_debut = date_debut
         self.date_fin = date_fin
-        self.matchs = []  # Initialiser comme une liste vide de matchs
+        self.match_list = match_list or []
 
     def ajouter_match(self, match):
-        """Ajoute un match à la liste des matchs du round."""
-        self.matchs.append(match)
-
-    @classmethod
-    def from_dict(cls, data):
-        round_instance = cls(
-            nom=data['nom'],
-            joueurs=[Joueur.from_dict(j) for j in data['joueurs']]  # Assurer que joueurs sont des objets Joueur
-        )
-        round_instance.matchs = [Match.from_dict(m) for m in data['matchs']]
-        return round_instance
+        self.match_list.append(match)
 
     def to_dict(self):
         return {
             'nom': self.nom,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs],  # Assurer que to_dict est appelé sur des objets Joueur
-            'matchs': [match.to_dict() for match in self.matchs]
+            'date_debut': self.date_debut.strftime('%d/%m/%Y %H:%M'),
+            'date_fin': self.date_fin.strftime('%d/%m/%Y %H:%M'),
+            'match_list': [match.to_dict() for match in self.match_list]
         }
+
+    @classmethod
+    def from_dict(cls, data):
+        round_ = cls(
+            nom=data['nom'],
+            date_debut=datetime.strptime(data['date_debut'], '%d/%m/%Y %H:%M'),
+            date_fin=datetime.strptime(data['date_fin'], '%d/%m/%Y %H:%M'),
+            match_list=[Match.from_dict(m) for m in data['match_list']]
+        )
+        return round_
 
 
 class Tournoi:
-    def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
+    def __init__(self, nom, lieu, date_debut, date_fin, rounds=4, numero_tour=0, rounds_list=None,
+                 joueurs=None, description="", scores=None):
         self.nom = nom
         self.lieu = lieu
         self.date_debut = date_debut
         self.date_fin = date_fin
         self.rounds = rounds
+        self.numero_tour = numero_tour
+        self.rounds_list = rounds_list or []
+        self.joueurs = joueurs or {}
         self.description = description
-        self.joueurs = {}  # Utiliser un dictionnaire pour stocker les joueurs
-        self.rounds_list = []  # Initialiser correctement rounds_list
-        self.matchs = []
+        self.scores = scores or {}
         self.rencontres = set()
-        self.scores = {}
+        self.matchs = []
+
+    def ajouter_round(self, tour_round):
+        self.rounds_list.append(tour_round)
 
     def ajouter_joueur(self, joueur):
         if joueur.matricule in self.joueurs:
@@ -144,12 +148,13 @@ class Tournoi:
             lieu=data['lieu'],
             date_debut=datetime.strptime(data['date_debut'], '%d/%m/%Y'),
             date_fin=datetime.strptime(data['date_fin'], '%d/%m/%Y'),
-            rounds=data['rounds'],
-            description=data['description']
+            rounds=data.get('nb_rounds', 4),  
+            numero_tour=data.get('numero_tour', 0),
+            rounds_list=[Round.from_dict(r) for r in data.get('rounds_list', [])],
+            joueurs={matricule: Joueur.from_dict(j) for matricule, j in data.get('joueurs', {}).items()},
+            description=data.get('description', ""),
+            scores=data.get('scores', {})
         )
-        tournoi.joueurs = {matricule: Joueur.from_dict(j) for matricule, j in data['joueurs'].items()}
-        tournoi.rounds_list = [Round.from_dict(r) for r in data['rounds_list']]
-        tournoi.scores = data['scores']
         return tournoi
 
     def to_dict(self):
@@ -159,14 +164,13 @@ class Tournoi:
             'date_debut': self.date_debut.strftime('%d/%m/%Y'),
             'date_fin': self.date_fin.strftime('%d/%m/%Y'),
             'rounds': self.rounds,
-            'description': self.description,
-            'joueurs': {matricule: joueur.to_dict() for matricule, joueur in self.joueurs.items()},
+            'numero_tour': self.numero_tour,
             'rounds_list': [round.to_dict() for round in self.rounds_list],
-            'scores': self.scores
+            'joueurs': {matricule: joueur.to_dict() for matricule, joueur in self.joueurs.items()},
+            'scores': self.scores,
+            'description': self.description
         }
 
-    def ajouter_round(self, round):
-        self.rounds_list.append(round)
 
 
 
