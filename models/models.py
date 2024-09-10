@@ -13,7 +13,7 @@ class Joueur:
         self.points += points  # Ajoute des points au total
 
     def __str__(self):
-        return f"{self.prenom} {self.nom} - Points: {self.points}"
+        return f"{self.prenom} {self.nom} - {self.date_naissance.strftime('%Y-%m-%d')} - Points: {self.points}"
 
     @classmethod
     def from_dict(cls, data):
@@ -106,14 +106,14 @@ class Tournoi:
         self.lieu = lieu
         self.date_debut = date_debut
         self.date_fin = date_fin
-        self.rounds = rounds
+        self.rounds = rounds  # Le nombre total de tours
         self.numero_tour = numero_tour
-        self.rounds_list = rounds_list or []
-        self.joueurs = joueurs or {}
+        self.rounds_list = rounds_list or []  # Liste des objets Round
+        self.joueurs = joueurs or {}  # Dictionnaire d'objets Joueur
         self.description = description
-        self.scores = scores or {}
+        self.scores = scores or {}  # Dictionnaire avec les scores
         self.rencontres = set()
-        self.matchs = []
+        self.matchs = []  # Optionnel si vous stockez déjà les matchs dans les rounds
 
     def ajouter_round(self, tour_round):
         self.rounds_list.append(tour_round)
@@ -148,7 +148,7 @@ class Tournoi:
             lieu=data['lieu'],
             date_debut=datetime.strptime(data['date_debut'], '%d/%m/%Y'),
             date_fin=datetime.strptime(data['date_fin'], '%d/%m/%Y'),
-            rounds=data.get('nb_rounds', 4),  
+            rounds=data.get('rounds', 4),  # Utiliser 'rounds' au lieu de 'nb_rounds' pour la cohérence
             numero_tour=data.get('numero_tour', 0),
             rounds_list=[Round.from_dict(r) for r in data.get('rounds_list', [])],
             joueurs={matricule: Joueur.from_dict(j) for matricule, j in data.get('joueurs', {}).items()},
@@ -163,7 +163,7 @@ class Tournoi:
             'lieu': self.lieu,
             'date_debut': self.date_debut.strftime('%d/%m/%Y'),
             'date_fin': self.date_fin.strftime('%d/%m/%Y'),
-            'rounds': self.rounds,
+            'rounds': self.rounds,  # Nombre total de tours, pas une liste
             'numero_tour': self.numero_tour,
             'rounds_list': [round.to_dict() for round in self.rounds_list],
             'joueurs': {matricule: joueur.to_dict() for matricule, joueur in self.joueurs.items()},
