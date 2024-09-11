@@ -210,7 +210,7 @@ class Controller:
 
     # Enregistrer les modifications du tournoi dans le fichier JSON
      self.enregistrer_tournoi(tournoi_obj.to_dict())
-
+ 
 
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
@@ -272,18 +272,10 @@ class Controller:
             json.dump(joueurs, file, indent=4)
 
     def enregistrer_tournoi(self, tournoi_data):
-     """Enregistre les données du tournoi dans le fichier JSON."""
-     tournois = self.charger_tous_les_tournois()
-     for i, tournoi in enumerate(tournois):
-        if tournoi['nom'] == tournoi_data['nom']:
-            tournois[i] = tournoi_data
-            break
-     else:
+        tournois = self.charger_tous_les_tournois()
         tournois.append(tournoi_data)
-
-     with open(self.tournois_path, 'w') as file:
-        json.dump(tournois, file, indent=4)
-
+        with open(self.tournois_path, 'w') as file:
+            json.dump(tournois, file, indent=4)
 
     def charger_joueurs_inscrits(self):
         if os.path.exists(self.joueurs_path):
@@ -296,6 +288,7 @@ class Controller:
             with open(self.tournois_path, 'r') as file:
                 return json.load(file)
         return []
+    
     def sauvegarder_tournoi(self, tournoi_id, tournoi):
         
      with open(f'data/{tournoi_id}.json', 'w') as file:
@@ -306,8 +299,8 @@ class Controller:
         self.view.afficher_rapport_joueurs(joueurs)
 
     def generer_rapport_tournois(self):
-      """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
-      try:
+     """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
+     try:
         # Charger tous les tournois
         tournois = self.charger_tous_les_tournois()
         
@@ -319,8 +312,11 @@ class Controller:
             self.view.afficher_rapport_tournois([tournoi_selectionne])
         else:
             self.view.afficher_message("Aucun tournoi sélectionné pour générer le rapport.")
-      except Exception as e:
+     except Exception as e:
         self.view.afficher_message(f"Erreur lors de la génération du rapport des tournois: {str(e)}")
+
+
+
 
 
 

@@ -114,7 +114,7 @@ class View:
         return None
 
     def afficher_rapport_tournois(self, tournois):
-     """Affiche le rapport des tournois avec les scores et les détails des matchs."""
+     """Affiche le rapport des tournois avec les scores, les détails des matchs, et le classement des joueurs."""
      if not tournois:
         self.afficher_message("Aucun tournoi enregistré.")
         return
@@ -125,21 +125,25 @@ class View:
                               f"Date de début: {tournoi['date_debut']}, "
                               f"Date de fin: {tournoi['date_fin']}, "
                               f"Description: {tournoi['description']}")
+        
         self.afficher_message("Scores des joueurs :")
-
-        if 'scores' in tournoi and isinstance(tournoi['scores'], dict):
-            for matricule, score in tournoi['scores'].items():
-                self.afficher_message(f"Joueur Matricule {matricule}: {score} points")
+        scores = tournoi.get('scores', {})
+        if isinstance(scores, dict):
+            for matricule, score in scores.items():
+                joueur_info = self.get_joueur_info(tournoi, matricule)
+                nom_joueur = f"{joueur_info['prenom']} {joueur_info['nom']}"
+                self.afficher_message(f"Joueur {nom_joueur}: {score} points")
         else:
             self.afficher_message("Aucun score disponible.")
-
-        # Afficher les détails des matchs
+        
         self.afficher_message("Détails des matchs :")
-        if 'rounds' in tournoi and isinstance(tournoi['rounds'], list):
-            for round in tournoi['rounds']:
+        rounds_list = tournoi.get('rounds_list', [])
+        if isinstance(rounds_list, list):
+            for round in rounds_list:
                 self.afficher_message(f"  --- {round['nom']} ---")
-                if 'matchs' in round and isinstance(round['matchs'], list):
-                    for match in round['matchs']:
+                matchs = round.get('matchs', [])
+                if isinstance(matchs, list):
+                    for match in matchs:
                         joueur1 = f"{match['joueur1']['nom']} {match['joueur1']['prenom']}"
                         joueur2 = (
                             f"{match['joueur2']['nom']} {match['joueur2']['prenom']}"
@@ -155,12 +159,36 @@ class View:
                             gagnant = joueur2
                         else:
                             gagnant = "Non joué"
-                        self.afficher_message(f"  Match: {joueur1} VS {joueur2}, Résultat: {resultat}, Gagnant: {gagnant}")
-
+                        self.afficher_message(f"  Match: {joueur1} VS {joueur2}, Gagnant: {gagnant}")
         else:
             self.afficher_message("  Aucun round disponible.")
+        
+        # Affichage du classement des joueurs
+        self.afficher_message("Classement des joueurs :")
+        if isinstance(scores, dict):
+            # Trier les joueurs en fonction des scores
+            classement = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+            for i, (matricule, score) in enumerate(classement, start=1):
+                joueur_info = self.get_joueur_info(tournoi, matricule)
+                nom_joueur = f"{joueur_info['prenom']} {joueur_info['nom']}"
+                self.afficher_message(f"{i}. Joueur {nom_joueur}: {score} points")
+        else:
+            self.afficher_message("  Aucun classement disponible.")
+    
+     self.afficher_message("="*50)
 
-        self.afficher_message("===============================")
+    def get_joueur_info(self, tournoi, matricule):
+     """Retourne les informations sur un joueur à partir du matricule dans le tournoi donné."""
+     joueurs = tournoi.get('joueurs', [])
+     for joueur in joueurs:
+        if joueur['matricule'] == matricule:
+            return {'prenom': joueur['prenom'], 'nom': joueur['nom']}
+     return {'prenom': 'Nom inconnu', 'nom': 'Nom inconnu'}
+
+
+
+
+
 
 
 
