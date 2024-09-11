@@ -127,7 +127,8 @@ class Controller:
                     return matricule
                 self.view.afficher_erreur("Le matricule existe déjà. Veuillez entrer un matricule unique.")
             else:
-                self.view.afficher_erreur("Matricule invalide. Veuillez entrer un matricule valide au format XX00000.")
+                self.view.afficher_erreur("Matricule invalide. " 
+                                          "Veuillez entrer un matricule valide au format XX00000.")
 
     def matricule_existe(self, matricule):
         joueurs = self.charger_joueurs_inscrits()
@@ -177,93 +178,92 @@ class Controller:
                 for match_index, match in enumerate(round.matchs):
                     self.lancer_match(round, match_index, tournoi_obj)
                 round.terminer()
-                self.view.afficher_message(f"Tous les matchs de {round.nom} sont terminés.\nHeure de fin : {round.date_heure_fin}")
+                self.view.afficher_message(f"Tous les matchs de {round.nom} " 
+                                           f"sont terminés.\nHeure de fin : {round.date_heure_fin}")
             self.view.afficher_message("Le tournoi est terminé !")
         else:
             self.view.afficher_erreur("Tournoi non trouvé.")
 
     def lancer_match(self, round, match_index, tournoi_obj):
-     match = round.matchs[match_index]
-     joueur1_nom = (f"{match.joueur1.prenom} {match.joueur1.nom}" if match.joueur1 else "Bye")
-     joueur2_nom = (f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else "Bye")
+        match = round.matchs[match_index]
+        joueur1_nom = (f"{match.joueur1.prenom} {match.joueur1.nom}" if match.joueur1 else "Bye")
+        joueur2_nom = (f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else "Bye")
 
-    # Afficher les détails du match avant de le lancer
-     self.view.afficher_match(round.nom, match, lancer=True)
+        # Afficher les détails du match avant de le lancer
+        self.view.afficher_match(round.nom, match, lancer=True)
 
-     resultat = input(f"Entrez le résultat du match (1 pour {joueur1_nom}, 2 pour {joueur2_nom}, 'N' pour nul) : ").strip().upper()
+        resultat = input(f"Entrez le résultat du match (1 pour {joueur1_nom}, " 
+                         f"2 pour {joueur2_nom}, 'N' pour nul) : ").strip().upper()
 
-     if resultat == 'N':
-        match.resultat = 'N'
-        tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 0.5
-        tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 0.5
-     elif resultat == '1':
-        match.resultat = '1'
-        tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 1
-     elif resultat == '2':
-        match.resultat = '2'
-        tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 1
-     else:
-        self.view.afficher_erreur("Résultat invalide. Veuillez entrer 1, 2 ou N.")
-        return  # Sortir de la méthode si le résultat est invalide
+        if resultat == 'N':
+            match.resultat = 'N'
+            tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 0.5
+            tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 0.5
+        elif resultat == '1':
+            match.resultat = '1'
+            tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 1
+        elif resultat == '2':
+            match.resultat = '2'
+            tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 1
+        else:
+            self.view.afficher_erreur("Résultat invalide. Veuillez entrer 1, 2 ou N.")
+            return  # Sortir de la méthode si le résultat est invalide
 
-     self.view.afficher_message(f"Résultat enregistré pour le match {match_index + 1}")
+        self.view.afficher_message(f"Résultat enregistré pour le match {match_index + 1}")
 
-    # Enregistrer les modifications du tournoi dans le fichier JSON
-     self.enregistrer_tournoi(tournoi_obj.to_dict())
- 
-
+        # Enregistrer les modifications du tournoi dans le fichier JSON
+        self.enregistrer_tournoi(tournoi_obj.to_dict())
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
-     nombre_joueurs = len(joueurs)
-     matchs = []
-     couleurs_joueurs = {joueur: {'blanc': 0, 'noir': 0} for joueur in joueurs}
+        nombre_joueurs = len(joueurs)
+        matchs = []
+        couleurs_joueurs = {joueur: {'blanc': 0, 'noir': 0} for joueur in joueurs}
 
-    # Générer tous les matchs possibles en round-robin
-     for i in range(nombre_joueurs):
-        for j in range(i + 1, nombre_joueurs):
-            joueur1 = joueurs[i]
-            joueur2 = joueurs[j]
+        # Générer tous les matchs possibles en round-robin
+        for i in range(nombre_joueurs):
+            for j in range(i + 1, nombre_joueurs):
+                joueur1 = joueurs[i]
+                joueur2 = joueurs[j]
 
-            match = Match(joueur1, joueur2)
-            if random.choice([True, False]):
-                match.blanc = joueur1
-                match.noir = joueur2
-                couleurs_joueurs[joueur1]['blanc'] += 1
-                couleurs_joueurs[joueur2]['noir'] += 1
-            else:
-                match.blanc = joueur2
-                match.noir = joueur1
-                couleurs_joueurs[joueur2]['blanc'] += 1
-                couleurs_joueurs[joueur1]['noir'] += 1
+                match = Match(joueur1, joueur2)
+                if random.choice([True, False]):
+                    match.blanc = joueur1
+                    match.noir = joueur2
+                    couleurs_joueurs[joueur1]['blanc'] += 1
+                    couleurs_joueurs[joueur2]['noir'] += 1
+                else:
+                    match.blanc = joueur2
+                    match.noir = joueur1
+                    couleurs_joueurs[joueur2]['blanc'] += 1
+                    couleurs_joueurs[joueur1]['noir'] += 1
 
-            matchs.append(match)
+                matchs.append(match)
 
-    # Assigner les matchs aux rounds en évitant les répétitions
-     rounds = []
-     nombre_de_rounds = max(1, (nombre_joueurs - 1))  # Assurer au moins un round
+        # Assigner les matchs aux rounds en évitant les répétitions
+        rounds = []
+        nombre_de_rounds = max(1, (nombre_joueurs - 1))  # Assurer au moins un round
 
-     for round_index in range(nombre_de_rounds):
-        current_round = Round(
-            nom=f"Round {round_index + 1}",
-            joueurs=joueurs[:]
-        )
-        current_round.commencer()  # Enregistrer l'heure de début du round
+        for round_index in range(nombre_de_rounds):
+            current_round = Round(
+                nom=f"Round {round_index + 1}",
+                joueurs=joueurs[:]
+            )
+            current_round.commencer()  # Enregistrer l'heure de début du round
 
-        round_matchs = []
-        joueurs_restants = joueurs[:]
-        for match in matchs:
-            if match.joueur1 in joueurs_restants and match.joueur2 in joueurs_restants:
-                round_matchs.append(match)
-                joueurs_restants.remove(match.joueur1)
-                joueurs_restants.remove(match.joueur2)
-                if len(joueurs_restants) < 2:
-                    break  # Plus assez de joueurs pour créer d'autres matchs
+            round_matchs = []
+            joueurs_restants = joueurs[:]
+            for match in matchs:
+                if match.joueur1 in joueurs_restants and match.joueur2 in joueurs_restants:
+                    round_matchs.append(match)
+                    joueurs_restants.remove(match.joueur1)
+                    joueurs_restants.remove(match.joueur2)
+                    if len(joueurs_restants) < 2:
+                        break  # Plus assez de joueurs pour créer d'autres matchs
 
-        current_round.matchs = round_matchs
-        rounds.append(current_round)
+            current_round.matchs = round_matchs
+            rounds.append(current_round)
 
-     tournoi.rounds_list = rounds
-
+        tournoi.rounds_list = rounds
 
     def enregistrer_joueur(self, joueur):
         joueurs = self.charger_joueurs_inscrits()
@@ -290,30 +290,29 @@ class Controller:
         return []
     
     def sauvegarder_tournoi(self, tournoi_id, tournoi):
-        
-     with open(f'data/{tournoi_id}.json', 'w') as file:
-        json.dump(tournoi.to_dict(), file, indent=4)
+        with open(f'data/{tournoi_id}.json', 'w') as file:
+            json.dump(tournoi.to_dict(), file, indent=4)
         
     def generer_rapport_joueurs(self):
         joueurs = self.charger_joueurs_inscrits()
         self.view.afficher_rapport_joueurs(joueurs)
 
     def generer_rapport_tournois(self):
-     """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
-     try:
-        # Charger tous les tournois
-        tournois = self.charger_tous_les_tournois()
+        """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
+        try:
+            # Charger tous les tournois
+            tournois = self.charger_tous_les_tournois()
         
-        # Afficher la liste des tournois et demander la sélection
-        tournoi_selectionne = self.view.afficher_liste_tournois(tournois)
+            # Afficher la liste des tournois et demander la sélection
+            tournoi_selectionne = self.view.afficher_liste_tournois(tournois)
         
-        if tournoi_selectionne:
-            # Afficher le rapport du tournoi sélectionné
-            self.view.afficher_rapport_tournois([tournoi_selectionne])
-        else:
-            self.view.afficher_message("Aucun tournoi sélectionné pour générer le rapport.")
-     except Exception as e:
-        self.view.afficher_message(f"Erreur lors de la génération du rapport des tournois: {str(e)}")
+            if tournoi_selectionne:
+                # Afficher le rapport du tournoi sélectionné
+                self.view.afficher_rapport_tournois([tournoi_selectionne])
+            else:
+                self.view.afficher_message("Aucun tournoi sélectionné pour générer le rapport.")
+        except Exception as e:
+            self.view.afficher_message(f"Erreur lors de la génération du rapport des tournois: {str(e)}")
 
 
 

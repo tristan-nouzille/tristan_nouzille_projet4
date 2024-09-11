@@ -173,7 +173,6 @@ class Tournoi:
         else:
             print(f"Joueur avec matricule {matricule} non trouvé.")
 
-
     def generer_rounds(self):
         if len(self.joueurs) < 2:
             raise ValueError("Pas assez de joueurs pour créer des rounds.")
