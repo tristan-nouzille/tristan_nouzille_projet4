@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import random
 
 class Joueur:
     def __init__(self, nom, prenom, date_naissance, matricule, points=0):
@@ -41,17 +41,17 @@ class Joueur:
 
 
 class Match:
-    
     def __init__(self, joueur1, joueur2):
         self.joueur1 = joueur1
         self.joueur2 = joueur2
         self.resultat = None
         self.blanc = None
         self.noir = None
-        
-    def lancer(self):
-        pass  # Logique de lancement du match à ajouter
     
+    def assigner_couleurs(self, couleur_joueur1, couleur_joueur2):
+        self.blanc = self.joueur1 if couleur_joueur1 == 'blanc' else self.joueur2
+        self.noir = self.joueur1 if couleur_joueur1 == 'noir' else self.joueur2
+
     @classmethod
     def from_dict(cls, data):
         match = cls(
@@ -74,12 +74,42 @@ class Match:
 
 
 class Round:
-    
     def __init__(self, nom, joueurs):
         self.nom = nom
         self.joueurs = joueurs
         self.matchs = []
-        
+        self.date_heure_debut = None
+        self.date_heure_fin = None
+
+    def commencer(self):
+        self.date_heure_debut = datetime.now().strftime("%H:%M")
+        self.generer_matchs()  # Générer les matchs lorsque le round commence
+
+    def terminer(self):
+        self.date_heure_fin = datetime.now().strftime("%H:%M")
+
+    def generer_matchs(self):
+        self.matchs = []  # Réinitialiser les matchs pour ce round
+        random.shuffle(self.joueurs)  # Mélanger les joueurs pour éviter les biais
+
+        used_matchups = set()  # Utilisé pour éviter les doublons
+        couleurs = ['blanc', 'noir']
+
+        for i in range(0, len(self.joueurs) - 1, 2):
+            joueur1 = self.joueurs[i]
+            joueur2 = self.joueurs[i + 1]
+
+            # Assurer qu'on ne refait pas le même match
+            if (joueur1.matricule, joueur2.matricule) in used_matchups or \
+               (joueur2.matricule, joueur1.matricule) in used_matchups:
+                continue  # Skip this pair if they have already played
+
+            couleur = couleurs[i % 2]  # Alternance simple pour les couleurs
+            match = Match(joueur1, joueur2)
+            match.assigner_couleurs(couleur, 'noir' if couleur == 'blanc' else 'blanc')
+            self.matchs.append(match)
+            used_matchups.add((joueur1.matricule, joueur2.matricule))
+
     @classmethod
     def from_dict(cls, data):
         round = cls(
@@ -87,14 +117,19 @@ class Round:
             joueurs=[Joueur.from_dict(j) for j in data['joueurs']]
         )
         round.matchs = [Match.from_dict(m) for m in data['matchs']]
+        round.date_heure_debut = data.get('date_heure_debut')
+        round.date_heure_fin = data.get('date_heure_fin')
         return round
-    
+
     def to_dict(self):
         return {
             'nom': self.nom,
             'joueurs': [joueur.to_dict() for joueur in self.joueurs],
-            'matchs': [match.to_dict() for match in self.matchs]
+            'matchs': [match.to_dict() for match in self.matchs],
+            'date_heure_debut': self.date_heure_debut,
+            'date_heure_fin': self.date_heure_fin
         }
+
 
 
 class Tournoi:

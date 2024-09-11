@@ -222,11 +222,14 @@ class Controller:
                 return
 
             for round in tournoi_obj.rounds_list:
-                self.view.afficher_message(f"=== Début de {round.nom} ===")
+                round.commencer()
+                self.view.afficher_message(
+                    f"=== Début de {round.nom} ===\n Heure de début : {round.date_heure_debut}")
                 for match_index, match in enumerate(round.matchs):
                     self.lancer_match(round, match_index, tournoi_obj)
+                round.terminer()
                 self.view.afficher_message(
-                    f"Tous les matchs de {round.nom} sont terminés."
+                    f"Tous les matchs de {round.nom} sont terminés.\nHeure de fin : {round.date_heure_fin}"
                 )
             self.view.afficher_message("Le tournoi est terminé !")
         else:
@@ -234,46 +237,88 @@ class Controller:
 
     def creer_matchs_round_robin(self, tournoi, joueurs):
         nombre_joueurs = len(joueurs)
-
         if not isinstance(joueurs, list):
             joueurs = list(joueurs.values())
 
-        random.shuffle(joueurs)
+        matchs = []
+        couleurs_joueurs = {joueur: {'blanc': 0, 'noir': 0} for joueur in joueurs}
 
+        # Créer tous les matchs en round-robin
+        for i in range(nombre_joueurs):
+            for j in range(i + 1, nombre_joueurs):
+                joueur1 = joueurs[i]
+                joueur2 = joueurs[j]
+            
+                match = Match(joueur1, joueur2)
+                if random.choice([True, False]):
+                    match.blanc = joueur1
+                    match.noir = joueur2
+                    couleurs_joueurs[joueur1]['blanc'] += 1
+                    couleurs_joueurs[joueur2]['noir'] += 1
+                else:
+                    match.blanc = joueur2
+                    match.noir = joueur1
+                    couleurs_joueurs[joueur2]['blanc'] += 1
+                    couleurs_joueurs[joueur1]['noir'] += 1
+
+                matchs.append(match)
+
+    # Distribuer les matchs dans les rounds
+        matchs_par_round = (len(matchs) + tournoi.rounds - 1) // tournoi.rounds
         for round_num in range(tournoi.rounds):
+            start_index = round_num * matchs_par_round
+            end_index = min(start_index + matchs_par_round, len(matchs))
             current_round = Round(
                 nom=f"Round {round_num + 1}",
-                joueurs=joueurs[:]  # Ensure you pass the list of players
+                joueurs=joueurs[:]  # Assurez-vous que vous passez la liste des joueurs
             )
-            current_round.lancer()  # Set the start time of the round
-
-            matchs = []
-            for i in range(0, nombre_joueurs, 2):
-                joueur1 = joueurs[i]
-                joueur2 = joueurs[i + 1] if i + 1 < nombre_joueurs else 'Bye'
-                match = Match(joueur1, joueur2)
-                matchs.append(match)
-            current_round.matchs = matchs
+            current_round.commencer()  # Définir l'heure de début du tour
+            current_round.matchs = matchs[start_index:end_index]
             tournoi.rounds_list.append(current_round)
 
 
     def lancer_match(self, round, match_index, tournoi_obj):
+        # Vérifier que l'index du match est valide
+        if match_index < 0 or match_index >= len(round.matchs):
+            print("Index de match invalide.")
+            return
+
+    # Récupérer le match en cours
         match = round.matchs[match_index]
-        self.view.afficher_match(match)
+
+    # Afficher les détails du match
+        joueur1_nom = f"{match.joueur1.prenom} {match.joueur1.nom}" if match.joueur1 else "Bye"
+        joueur2_nom = f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else "Bye"
+        self.view.afficher_match(round.nom, match, lancer=True)
+
+    # Demander le résultat du match
         resultat = input(
-            "Entrez le résultat du match (Gagnant1, Gagnant2, N pour match nul) : "
-        )
-        match.resultat = resultat.upper()
+            f"Entrez le résultat du match (1 pour {joueur1_nom}, 2 pour {joueur2_nom}, N pour match nul) : "
+        ).strip().upper()
 
-        if match.resultat == 'GAGNANT1':
-            match.joueur1.ajouter_points(1)
-        elif match.resultat == 'GAGNANT2':
-            match.joueur2.ajouter_points(1)
-        elif match.resultat in ['N', 'NUL']:
-            match.joueur1.ajouter_points(0.5)
-            match.joueur2.ajouter_points(0.5)
+    # Mettre à jour le résultat du match
+        if resultat == '1':
+            match.resultat = '1'
+            if match.joueur1:
+                match.joueur1.ajouter_points(1)
+        elif resultat == '2':
+            match.resultat = '2'
+            if match.joueur2:
+                match.joueur2.ajouter_points(1)
+        elif resultat in ['N', 'NUL']:
+            match.resultat = 'NUL'
+            if match.joueur1:
+                match.joueur1.ajouter_points(0.5)
+            if match.joueur2:
+                match.joueur2.ajouter_points(0.5)
+        else:
+            print("Résultat non valide. Aucune mise à jour effectuée.")
+            return
 
+        # Enregistrer les résultats dans le tournoi
         self.enregistrer_tournoi(tournoi_obj.to_dict())
+
+
 
     def enregistrer_joueur(self, joueur):
         with open(self.joueurs_path, 'r+') as file:
@@ -283,11 +328,25 @@ class Controller:
             json.dump(data, file, indent=4)
 
     def enregistrer_tournoi(self, tournoi_data):
-        with open(self.tournois_path, 'r+') as file:
-            data = json.load(file)
+        # Lire les données existantes
+        if os.path.exists(self.tournois_path):
+            with open(self.tournois_path, 'r') as file:
+                data = json.load(file)
+        else:
+            data = []
+
+        # Mettre à jour les données avec le tournoi nouvellement ajouté
+        for i, tournoi in enumerate(data):
+            if tournoi['nom'] == tournoi_data['nom']:
+                data[i] = tournoi_data
+                break
+        else:
             data.append(tournoi_data)
-            file.seek(0)
+
+    # Réécrire le fichier avec les données mises à jour
+        with open(self.tournois_path, 'w') as file:
             json.dump(data, file, indent=4)
+
 
     def charger_joueurs_inscrits(self):
         if not os.path.exists(self.joueurs_path):

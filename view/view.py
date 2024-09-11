@@ -54,13 +54,21 @@ class View:
             print('')
             print('=================================================================================================')
             print('')
-            print(f"Match en cours dans le tour '{tour_nom}': {match.joueur1.prenom} {match.joueur1.nom} vs "
-                  f"{match.joueur2.prenom if match.joueur2 else 'Bye'}")
+        
+            joueur1_nom = f"{match.joueur1.prenom} {match.joueur1.nom}"
+            joueur2_nom = f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else 'Bye'
+        
+            couleur_joueur1 = "Blanc" if match.blanc == match.joueur1 else "Noir"
+            couleur_joueur2 = "Blanc" if match.blanc == match.joueur2 else "Noir"
+
+            print(f"Match en cours dans le '{tour_nom}': {joueur1_nom} ({couleur_joueur1}) vs {joueur2_nom} ({couleur_joueur2})")
             print('')
             print('=================================================================================================')
             print('')
-        else:
             print(f"======> Match terminé: {match.resultat}")
+        else:
+            print(f"ERREUR : match impossible à réaliser !!!!")
+
 
     def afficher_rapport_joueurs(self, joueurs):
         print("Rapport des joueurs :")
