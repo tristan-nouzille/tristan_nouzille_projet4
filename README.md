@@ -20,18 +20,20 @@ python --version
 
 ```
 ## Installation
- # Sur macOS et Linux
 
- 1. Clonez le dépôt :
+1. Clonez le dépôt :
 
   ```
   git clone https://github.com/tristan-nouzille/tristan_nouzille_projet4
-  cd tristan_nouzille_projet4
-
   ```
 
-  2. Créez un environnement virtuel (optionnel mais recommandé) :
+  Ensuite accédez au dossier en tapant cette ligne :
+  ```
+  cd tristan_nouzille_projet4
 
+2. Créez un environnement virtuel (optionnel mais recommandé) :
+
+# Sur macOS et Linux
    ```
   python3 -m venv venv
   source venv/bin/activate
@@ -51,17 +53,25 @@ python --version
 
 # Sur Windows
 
- 1. Clonez le dépôt :
+2. Créez un environnement virtuel (optionnel mais recommandé) :
+  
+ a. instaler virtualenv:
+ ```
+ pip install virtualenv
+ ```
+ b. créez votre dossier d'environnement virtuel:
+ ```
+ python -m venv env
+ ```
+ c. Activez votre environnement avec :
 
   ```
-  git clone https://github.com/tristan-nouzille/tristan_nouzille_projet4
-  cd tristan_nouzille_projet4
+  source env\Scripts\activate  
   ```
- 2. Créez un environnement virtuel (optionnel mais recommandé) :
-  
+  une fois effectuer, votre terminal s'affichera comme ceci :
   ```
-  python -m venv venv
-  venv\Scripts\activate  
+  (env)
+  NOM_de_votre_pc-PC ~/nom_de_votre_dossier/tristan_nouzille_projet4
   ```
 
  3. Installez les dépendances nécessaires :
@@ -69,7 +79,12 @@ python --version
    ```
    pip install -r requirements.txt
    ```
+  si vous souhaitez voir toutes les dépendances installé, voici la ligne à taper:
 
+  ```
+  pip freeze
+  ```
+  
  4. Lancez l'application :
 
 ```
