@@ -1,6 +1,7 @@
 from datetime import datetime
 import random
 
+
 class Joueur:
     def __init__(self, nom, prenom, date_naissance, matricule, points=0):
         self.nom = nom
@@ -39,7 +40,6 @@ class Joueur:
         return len(matricule) == 7 and matricule[:2].isalpha() and matricule[2:].isdigit()
 
 
-
 class Match:
     def __init__(self, joueur1, joueur2):
         self.joueur1 = joueur1
@@ -47,10 +47,12 @@ class Match:
         self.resultat = None
         self.blanc = None
         self.noir = None
-    
-    def assigner_couleurs(self, couleur_joueur1, couleur_joueur2):
-        self.blanc = self.joueur1 if couleur_joueur1 == 'blanc' else self.joueur2
-        self.noir = self.joueur1 if couleur_joueur1 == 'noir' else self.joueur2
+
+    def assigner_couleurs(self):
+        # Assigner les couleurs de manière aléatoire
+        couleur = random.choice(['blanc', 'noir'])
+        self.blanc = self.joueur1 if couleur == 'blanc' else self.joueur2
+        self.noir = self.joueur1 if couleur == 'noir' else self.joueur2
 
     @classmethod
     def from_dict(cls, data):
@@ -62,7 +64,7 @@ class Match:
         match.blanc = Joueur.from_dict(data['blanc']) if data.get('blanc') else None
         match.noir = Joueur.from_dict(data['noir']) if data.get('noir') else None
         return match
-    
+
     def to_dict(self):
         return {
             'joueur1': self.joueur1.to_dict(),
@@ -83,32 +85,36 @@ class Round:
 
     def commencer(self):
         self.date_heure_debut = datetime.now().strftime("%H:%M")
-        self.generer_matchs()  # Générer les matchs lorsque le round commence
+        self.generer_matchs()
 
     def terminer(self):
         self.date_heure_fin = datetime.now().strftime("%H:%M")
 
     def generer_matchs(self):
-        self.matchs = []  # Réinitialiser les matchs pour ce round
-        random.shuffle(self.joueurs)  # Mélanger les joueurs pour éviter les biais
+        self.matchs = []
+        random.shuffle(self.joueurs)  # Mélanger les joueurs
+        
+        joueurs_disponibles = set(self.joueurs)
+        while len(joueurs_disponibles) > 1:
+            joueur1 = joueurs_disponibles.pop()
+            joueur2 = None
+            for possible_adversaire in joueurs_disponibles:
+                if not self.a_deja_joue(joueur1, possible_adversaire):
+                    joueur2 = possible_adversaire
+                    break
 
-        used_matchups = set()  # Utilisé pour éviter les doublons
-        couleurs = ['blanc', 'noir']
+            if joueur2:
+                match = Match(joueur1, joueur2)
+                match.assigner_couleurs()
+                self.matchs.append(match)
+            else:
+                joueurs_disponibles.add(joueur1)  # Réajouter joueur1 s'il reste seul
 
-        for i in range(0, len(self.joueurs) - 1, 2):
-            joueur1 = self.joueurs[i]
-            joueur2 = self.joueurs[i + 1]
-
-            # Assurer qu'on ne refait pas le même match
-            if (joueur1.matricule, joueur2.matricule) in used_matchups or \
-               (joueur2.matricule, joueur1.matricule) in used_matchups:
-                continue  # Skip this pair if they have already played
-
-            couleur = couleurs[i % 2]  # Alternance simple pour les couleurs
-            match = Match(joueur1, joueur2)
-            match.assigner_couleurs(couleur, 'noir' if couleur == 'blanc' else 'blanc')
-            self.matchs.append(match)
-            used_matchups.add((joueur1.matricule, joueur2.matricule))
+    def a_deja_joue(self, joueur1, joueur2):
+        return any(
+            (m.joueur1 == joueur1 and m.joueur2 == joueur2) or (m.joueur1 == joueur2 and m.joueur2 == joueur1) 
+            for m in self.matchs
+        )
 
     @classmethod
     def from_dict(cls, data):
@@ -131,42 +137,53 @@ class Round:
         }
 
 
-
 class Tournoi:
-    def __init__(self, nom, lieu, date_debut, date_fin, rounds, description):
+    def __init__(self, nom, lieu, date_debut, date_fin, rounds=4, description=""):
         self.nom = nom
         self.lieu = lieu
         self.date_debut = date_debut
         self.date_fin = date_fin
         self.rounds = rounds
         self.description = description
-        self.joueurs = {}  # Utiliser un dictionnaire pour stocker les joueurs
+        self.joueurs = {}
         self.rounds_list = []
         self.matchs = []
         self.rencontres = set()
         self.scores = {}
-        
+
     def ajouter_joueur(self, joueur):
         if joueur.matricule in self.joueurs:
             raise ValueError(f"Le joueur avec le matricule {joueur.matricule} est déjà inscrit.")
         self.joueurs[joueur.matricule] = joueur
-        self.scores[joueur.matricule] = joueur.points  # Initialise les scores avec les points du joueur
-        
+        self.scores[joueur.matricule] = joueur.points
+
     def a_deja_joue(self, joueur1, joueur2):
         return ((joueur1.matricule, joueur2.matricule) in self.rencontres
                 or (joueur2.matricule, joueur1.matricule) in self.rencontres)
-        
+
     def ajouter_match(self, match):
         self.matchs.append(match)
         self.rencontres.add((match.joueur1.matricule, match.joueur2.matricule))
-        
+
     def enregistrer_resultat(self, matricule, points):
         joueur = self.joueurs.get(matricule)
         if joueur:
-            joueur.ajouter_points(points)  # Utiliser la méthode ajouter_points
+            joueur.ajouter_points(points)
+            self.scores[matricule] = joueur.points  # Met à jour les scores
         else:
             print(f"Joueur avec matricule {matricule} non trouvé.")
-            
+
+
+    def generer_rounds(self):
+        if len(self.joueurs) < 2:
+            raise ValueError("Pas assez de joueurs pour créer des rounds.")
+        
+        for i in range(1, self.rounds + 1):
+            round_nom = f"Round {i}"
+            round = Round(round_nom, list(self.joueurs.values()))
+            self.rounds_list.append(round)
+            round.commencer()
+
     @classmethod
     def from_dict(cls, data):
         tournoi = cls(
@@ -178,15 +195,15 @@ class Tournoi:
             description=data['description']
         )
         tournoi.joueurs = {j['matricule']: Joueur.from_dict(j) for j in data['joueurs']}
-        
+
         if 'rounds_list' in data:
             tournoi.rounds_list = [Round.from_dict(r) for r in data['rounds_list']]
         else:
-            tournoi.rounds_list = []  # Aucun round trouvé
-        
+            tournoi.rounds_list = []
+
         tournoi.matchs = [Match.from_dict(m) for m in data.get('matchs', [])]
         return tournoi
-    
+
     def to_dict(self):
         return {
             'nom': self.nom,
@@ -198,11 +215,13 @@ class Tournoi:
             'joueurs': [joueur.to_dict() for joueur in self.joueurs.values()],
             'rounds_list': [round.to_dict() for round in self.rounds_list],
             'matchs': [match.to_dict() for match in self.matchs],
-            'scores': self.scores  # Assurez-vous que 'scores' est un dictionnaire ici
+            'scores': self.scores
         }
-    
+
     def ajouter_round(self, round):
         self.rounds_list.append(round)
+
+
 
 
 
