@@ -280,41 +280,48 @@ class Controller:
     def enregistrer_joueur(self, joueur):
         joueurs = self.charger_joueurs_inscrits()
         joueurs.append(joueur.to_dict())
-        with open(self.joueurs_path, 'w') as file:
-            json.dump(joueurs, file, indent=4)
+        with open(self.joueurs_path, 'w', encoding='utf-8') as file:
+            json.dump(joueurs, file, ensure_ascii=False, indent=4)
 
     def enregistrer_tournoi(self, tournoi_data):
-        """Enregistre les données du tournoi dans le fichier JSON."""
+        """Enregistrer un tournoi dans le fichier JSON."""
         tournois = self.charger_tous_les_tournois()
         for i, tournoi in enumerate(tournois):
             if tournoi['nom'] == tournoi_data['nom']:
                 tournois[i] = tournoi_data
                 break
-            else:
-                tournois.append(tournoi_data)
+        else:
+            tournois.append(tournoi_data)
 
-            with open(self.tournois_path, 'w') as file:
-                json.dump(tournois, file, indent=4)
+        with open(self.tournois_path, 'w', encoding='utf-8') as file:
+            json.dump(tournois, file, ensure_ascii=False, indent=4)
 
     def charger_joueurs_inscrits(self):
         if os.path.exists(self.joueurs_path):
-            with open(self.joueurs_path, 'r') as file:
+            with open(self.joueurs_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         return []
 
     def charger_tous_les_tournois(self):
         if os.path.exists(self.tournois_path):
-            with open(self.tournois_path, 'r') as file:
+            with open(self.tournois_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         return []
     
     def sauvegarder_tournoi(self, tournoi_id, tournoi):
-        with open(f'data/{tournoi_id}.json', 'w') as file:
-            json.dump(tournoi.to_dict(), file, indent=4)
+        with open(f'data/{tournoi_id}.json', 'w', encoding='utf-8') as file:
+            json.dump(tournoi.to_dict(), file, ensure_ascii=False, indent=4)
         
     def generer_rapport_joueurs(self):
-        joueurs = self.charger_joueurs_inscrits()
-        self.view.afficher_rapport_joueurs(joueurs)
+        # Charger les joueurs depuis le fichier JSON
+         joueurs_data = self.charger_joueurs_inscrits()
+    
+        # Créer des objets Joueur à partir des données
+         joueurs = [Joueur.from_dict(data) for data in joueurs_data]  # Assurez-vous que Joueur a une méthode from_dict
+        # Trier les joueurs par nom, puis par prénom
+         joueurs_tries = sorted(joueurs, key=lambda x: (x.nom, x.prenom))
+        # Afficher le rapport des joueurs triés
+         self.view.afficher_rapport_joueurs(joueurs_tries)
 
     def generer_rapport_tournois(self):
         """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""

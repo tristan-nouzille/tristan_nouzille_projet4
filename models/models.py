@@ -103,6 +103,7 @@ class Round:
         random.shuffle(self.joueurs)  # Mélanger les joueurs
 
         # Si le nombre de joueurs est impair, un joueur sera exempté
+        joueur_exempte = None
         if len(self.joueurs) % 2 != 0:
             joueur_exempte = self.joueurs.pop()  # Retirer un joueur temporairement
             print(f"Le joueur {joueur_exempte.nom} est exempté de ce round.")
@@ -139,7 +140,7 @@ class Round:
     def to_dict(self):
         return {
             'nom': self.nom,
-            'joueurs': [joueur.to_dict() for joueur in self.joueurs],
+            'joueurs': [joueur.to_dict() for joueur in self.joueurs if joueur is not None],
             'matchs': [match.to_dict() for match in self.matchs],
             'date_heure_debut': self.date_heure_debut,
             'date_heure_fin': self.date_heure_fin
