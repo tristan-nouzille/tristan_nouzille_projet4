@@ -314,14 +314,14 @@ class Controller:
         
     def generer_rapport_joueurs(self):
         # Charger les joueurs depuis le fichier JSON
-         joueurs_data = self.charger_joueurs_inscrits()
+        joueurs_data = self.charger_joueurs_inscrits()
     
         # Créer des objets Joueur à partir des données
-         joueurs = [Joueur.from_dict(data) for data in joueurs_data]  # Assurez-vous que Joueur a une méthode from_dict
+        joueurs = [Joueur.from_dict(data) for data in joueurs_data]  # Assurez-vous que Joueur a une méthode from_dict
         # Trier les joueurs par nom, puis par prénom
-         joueurs_tries = sorted(joueurs, key=lambda x: (x.nom, x.prenom))
+        joueurs_tries = sorted(joueurs, key=lambda x: (x.nom, x.prenom))
         # Afficher le rapport des joueurs triés
-         self.view.afficher_rapport_joueurs(joueurs_tries)
+        self.view.afficher_rapport_joueurs(joueurs_tries)
 
     def generer_rapport_tournois(self):
         """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
