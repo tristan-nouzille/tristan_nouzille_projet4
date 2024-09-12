@@ -110,7 +110,7 @@ class Round:
         # Associer les joueurs par paires
         for i in range(0, len(self.joueurs), 2):
             joueur1 = self.joueurs[i]
-            joueur2 = self.joueurs[i+1]
+            joueur2 = self.joueurs[i + 1]
             match = Match(joueur1, joueur2)
             match.assigner_couleurs()
             self.matchs.append(match)
