@@ -120,15 +120,14 @@ une fois effectuer, votre terminal s'affichera comme ceci :
 Lorsque l'application est lancée, un menu principal apparaîtra vous permettant de choisir parmi différentes options de gestion des tournois. Suivez les instructions à l'écran pour naviguer et découvrir les différentes fonctionnalités.
 
 # Style de Code
-Pour maintenir un code de qualité, utilisez flake8 pour vérifier le style de votre code. Voici comment l'installer et l'utiliser :
+Pour maintenir un code de qualité, utilisez flake8 pour vérifier le style de votre code. Voici comment utiliser :
 
-Installation de flake8
-Vous pouvez installer flake8 via pip :
+Tout d'abord vérifier dans votre dépendance si vous avez flake8 et flake8-html avec : 
 
  ```
- pip install flake8
+  pip freeze
  ```
-
+ 
 Pour vérifier le style de votre code, exécutez la commande suivante dans le répertoire de votre projet :
 
  ```
