@@ -76,7 +76,8 @@ class View:
             couleur_joueur1 = "Blanc" if match.blanc == match.joueur1 else "Noir"
             couleur_joueur2 = "Blanc" if match.blanc == match.joueur2 else "Noir"
 
-            print(f"Match en cours dans le '{tour_nom}': {joueur1_nom} ({couleur_joueur1}) vs {joueur2_nom} ({couleur_joueur2})")
+            print(f"Match en cours dans le '{tour_nom}': {joueur1_nom} ({couleur_joueur1}) " 
+                  f"vs {joueur2_nom} ({couleur_joueur2})")
             print('')
             print('================================================================================================')
             print('')
