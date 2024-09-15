@@ -194,7 +194,7 @@ class Controller:
     
         joueur1_nom = (f"{match.joueur1.prenom} {match.joueur1.nom}" if match.joueur1 else "Bye")
         joueur2_nom = (f"{match.joueur2.prenom} {match.joueur2.nom}" if match.joueur2 else "Bye")
-
+        match.assigner_couleurs()
         # Afficher les détails du match avant de le lancer
         self.view.afficher_match(round.nom, match, lancer=True)
 
@@ -257,14 +257,6 @@ class Controller:
                 # Vérifier que ce n'est pas un "bye"
                 if joueur1 is not None and joueur2 is not None:
                     match = Match(joueur1, joueur2)
-                
-                    # Tirage au sort des couleurs
-                    if random.choice([True, False]):
-                        match.blanc = joueur1
-                        match.noir = joueur2
-                    else:
-                        match.blanc = joueur2
-                        match.noir = joueur1
 
                     round_matchs.append(match)
 
@@ -272,7 +264,7 @@ class Controller:
             rounds.append(current_round)
 
             # Rotation round-robin : Faire tourner les joueurs pour le prochain round
-            joueurs.insert(1, joueurs.pop())
+            joueurs = [joueurs[0]] + [joueurs[-1]] + joueurs[1:-1]
 
         # Assigner la liste des rounds au tournoi
         tournoi.rounds_list = rounds

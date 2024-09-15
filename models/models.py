@@ -49,11 +49,18 @@ class Match:
         self.noir = None
 
     def assigner_couleurs(self):
-        # Assigner les couleurs de manière aléatoire
-        couleur = random.choice(['blanc', 'noir'])
-        self.blanc = self.joueur1 if couleur == 'blanc' else self.joueur2
-        self.noir = self.joueur1 if couleur == 'noir' else self.joueur2
-        
+        # Assigner les couleurs uniquement si elles ne sont pas déjà définies
+        if self.blanc is None and self.noir is None:
+            couleur = random.choice(['blanc', 'noir'])
+            if couleur == 'blanc':
+                self.blanc = self.joueur1
+                self.noir = self.joueur2
+            else:
+                self.blanc = self.joueur2
+                self.noir = self.joueur1
+        else:
+            print("Les couleurs sont déjà assignées.")
+   
     def entrer_resultat(self, gagnant):
         if gagnant == self.joueur1:
             self.resultat = f"Gagnant: {self.joueur1.nom}"
@@ -93,7 +100,7 @@ class Round:
 
     def commencer(self):
         self.date_heure_debut = datetime.now().strftime("%H:%M")
-        self.generer_matchs()
+        #self.generer_matchs()
 
     def terminer(self):
         self.date_heure_fin = datetime.now().strftime("%H:%M")
