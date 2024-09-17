@@ -42,6 +42,7 @@ class View:
 
     @staticmethod
     def afficher_tous_les_tournois(tournois):
+        tournois = [t for t in tournois if not t.get('termine', False)]
         if not tournois:
             print("Aucun tournoi trouvé.")
             return

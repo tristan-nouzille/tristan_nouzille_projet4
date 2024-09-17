@@ -179,7 +179,10 @@ class Controller:
                 round.terminer()
                 self.view.afficher_message(f"Tous les matchs de {round.nom} " 
                                            f"sont terminés.\nHeure de fin : {round.date_heure_fin}")
+            tournoi_obj.marquer_comme_termine()
+            self.enregistrer_tournoi(tournoi_obj.to_dict())   
             self.view.afficher_message("Le tournoi est terminé !")
+            
         else:
             self.view.afficher_erreur("Tournoi non trouvé.")
 

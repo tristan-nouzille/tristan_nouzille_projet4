@@ -154,7 +154,7 @@ class Round:
 
 
 class Tournoi:
-    def __init__(self, nom, lieu, date_debut, date_fin, rounds=4, description=""):
+    def __init__(self, nom, lieu, date_debut, date_fin, rounds=4, description="", termine=False):
         self.nom = nom
         self.lieu = lieu
         self.date_debut = date_debut
@@ -166,7 +166,11 @@ class Tournoi:
         self.matchs = []
         self.rencontres = set()
         self.scores = {}
-
+        self.termine = termine
+        
+    def marquer_comme_termine(self):
+        self.termine = True
+        
     def ajouter_joueur(self, joueur):
         if joueur.matricule in self.joueurs:
             raise ValueError(f"Le joueur avec le matricule {joueur.matricule} est déjà inscrit.")
@@ -209,6 +213,7 @@ class Tournoi:
             rounds=data['rounds'],
             description=data['description']
         )
+        tournoi.termine=data.get('termine', False)
         tournoi.joueurs = {j['matricule']: Joueur.from_dict(j) for j in data['joueurs']}
 
         if 'rounds_list' in data:
@@ -230,7 +235,8 @@ class Tournoi:
             'joueurs': [joueur.to_dict() for joueur in self.joueurs.values()],
             'rounds_list': [round.to_dict() for round in self.rounds_list],
             'matchs': [match.to_dict() for match in self.matchs],
-            'scores': self.scores
+            'scores': self.scores,
+            'termine':self.termine
         }
 
     def ajouter_round(self, round):
