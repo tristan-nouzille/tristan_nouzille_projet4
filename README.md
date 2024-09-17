@@ -128,7 +128,7 @@ Tout d'abord vérifier dans votre dépendance si vous avez flake8 et flake8-html
   pip freeze
  ```
 
-## Configuration de flake8
+Configuration de flake8
 
 flake8 peut être configuré à l'aide d'un fichier de configuration. nommé ".flake8" à la racine de votre projet avec le contenu suivant comme par exemple : 
 
