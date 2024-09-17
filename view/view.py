@@ -152,9 +152,14 @@ class View:
             rapport.append("Scores des joueurs :")
             scores = tournoi.get('scores', {})
             if isinstance(scores, dict):
-                for matricule, score in scores.items():
+                joueurs_sorted = sorted(scores.keys(), key=lambda matricule: (
+                    self.get_joueur_info(tournoi, matricule)['nom'].lower(),
+                    self.get_joueur_info(tournoi, matricule)['prenom'].lower()
+                ))
+                for matricule in joueurs_sorted :
                     joueur_info = self.get_joueur_info(tournoi, matricule)
-                    nom_joueur = f"{joueur_info['prenom']} {joueur_info['nom']}"
+                    nom_joueur = f"{joueur_info['nom']} {joueur_info['prenom']}"
+                    score = scores[matricule]
                     rapport.append(f"Joueur {nom_joueur}: {score} points")
             else:
                 rapport.append("Aucun score disponible.")

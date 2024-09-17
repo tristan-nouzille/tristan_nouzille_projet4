@@ -213,7 +213,7 @@ class Tournoi:
             rounds=data['rounds'],
             description=data['description']
         )
-        tournoi.termine=data.get('termine', False)
+        tournoi.termine = data.get('termine', False)
         tournoi.joueurs = {j['matricule']: Joueur.from_dict(j) for j in data['joueurs']}
 
         if 'rounds_list' in data:
@@ -236,7 +236,7 @@ class Tournoi:
             'rounds_list': [round.to_dict() for round in self.rounds_list],
             'matchs': [match.to_dict() for match in self.matchs],
             'scores': self.scores,
-            'termine':self.termine
+            'termine': self.termine
         }
 
     def ajouter_round(self, round):
