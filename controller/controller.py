@@ -1,6 +1,5 @@
 import json
 import os
-import random
 from datetime import datetime
 from models.models import Joueur, Tournoi, Round, Match
 
@@ -216,7 +215,7 @@ class Controller:
             self.view.afficher_erreur("Résultat invalide. Veuillez entrer 1, 2 ou N.")
             return  # Sortir de la méthode si le résultat est invalide
 
-        self.view.afficher_message(f"Résultat enregistré pour le match {match_index + 1}")
+        self.view.afficher_message(f"======> Résultat enregistré pour le match {match_index + 1}")
 
         # Enregistrer les modifications du tournoi dans le fichier JSON
         self.enregistrer_tournoi(tournoi_obj.to_dict())
@@ -316,21 +315,48 @@ class Controller:
         self.view.afficher_rapport_joueurs(joueurs_tries)
 
     def generer_rapport_tournois(self):
-        """Génère un rapport d'un tournoi sélectionné par l'utilisateur."""
+        """Génère un rapport d'un tournoi sélectionné par l'utilisateur et permet l'exportation du rapport."""
         try:
             # Charger tous les tournois
             tournois = self.charger_tous_les_tournois()
-        
+
             # Afficher la liste des tournois et demander la sélection
             tournoi_selectionne = self.view.afficher_liste_tournois(tournois)
-        
-            if tournoi_selectionne:
-                # Afficher le rapport du tournoi sélectionné
-                self.view.afficher_rapport_tournois([tournoi_selectionne])
+
+            if isinstance(tournoi_selectionne, dict):  # Vérifier que tournoi_selectionne est un dictionnaire
+                # Obtenir le rapport du tournoi sélectionné sous forme de chaîne de caractères
+                rapport = self.view.obtenir_contenu_rapport_tournois([tournoi_selectionne])
+
+                # Afficher le rapport
+                self.view.afficher_message(rapport)
+
+                # Demander à l'utilisateur s'il souhaite exporter le rapport dans un fichier texte
+                choix_export = self.view.demander_confirmation("Souhaitez-vous exporter ce rapport "
+                                                               "dans un fichier texte ? ")
+
+                if choix_export and choix_export.lower() == 'o':
+                    # Créer le dossier 'rapport_tournois' s'il n'existe pas
+                    dossier_rapport = 'rapport_tournois'
+                    if not os.path.exists(dossier_rapport):
+                        os.makedirs(dossier_rapport)
+
+                    # Créer un nom de fichier basé sur le nom du tournoi
+                    nom_fichier = f"{tournoi_selectionne['nom']}_rapport.txt"
+                    chemin_fichier = os.path.join(dossier_rapport, nom_fichier)
+
+                    # Écrire le rapport dans un fichier texte
+                    with open(chemin_fichier, 'w', encoding='utf-8') as fichier:
+                        fichier.write(rapport)
+
+                    self.view.afficher_message(f"Le rapport a été exporté avec succès dans " 
+                                               f"le fichier {chemin_fichier}.")
+                else:
+                    self.view.afficher_message("Le rapport n'a pas été exporté.")
             else:
                 self.view.afficher_message("Aucun tournoi sélectionné pour générer le rapport.")
         except Exception as e:
             self.view.afficher_message(f"Erreur lors de la génération du rapport des tournois: {str(e)}")
+
 
 
 

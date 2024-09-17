@@ -100,7 +100,6 @@ class Round:
 
     def commencer(self):
         self.date_heure_debut = datetime.now().strftime("%H:%M")
-        #self.generer_matchs()
 
     def terminer(self):
         self.date_heure_fin = datetime.now().strftime("%H:%M")
