@@ -153,6 +153,13 @@ class Controller:
 
         if tournoi_data:
             tournoi_obj = Tournoi.from_dict(tournoi_data)
+
+            # Vérifier si le tournoi est déjà terminé
+            if tournoi_obj.termine:
+                self.view.afficher_erreur("Le tournoi est déjà terminé.")
+                self.afficher_menu_principal()  # Retour au menu principal
+                return
+
             self.view.afficher_message(f"Lancement du tournoi : {tournoi_obj.nom}")
 
             for round in tournoi_obj.rounds_list:
@@ -169,23 +176,26 @@ class Controller:
             confirmation = input("Voulez-vous lancer les matchs ? (o/n) : ")
             if confirmation.lower() != 'o':
                 self.view.afficher_message("Lancement des matchs annulé.")
+                self.view.afficher_menu_principal()  # Retourner au menu principal
                 return
 
+            # Lancer les matchs uniquement si confirmé
             for round in tournoi_obj.rounds_list:
                 round.commencer()
                 self.view.afficher_message(f"=== Début de {round.nom} ===\n Heure de début : {round.date_heure_debut}")
                 for match_index, match in enumerate(round.matchs):
                     self.lancer_match(round, match_index, tournoi_obj)
                 round.terminer()
-                self.view.afficher_message(f"Tous les matchs de {round.nom} " 
+                self.view.afficher_message(f"Tous les matchs de {round.nom} "
                                            f"sont terminés.\nHeure de fin : {round.date_heure_fin}")
+
             tournoi_obj.marquer_comme_termine()
-            self.enregistrer_tournoi(tournoi_obj.to_dict())   
+            self.enregistrer_tournoi(tournoi_obj.to_dict())
             self.view.afficher_message("Le tournoi est terminé !")
-            
+        
         else:
             self.view.afficher_erreur("Tournoi non trouvé.")
-
+            
     def lancer_match(self, round, match_index, tournoi_obj):
         # Vérifier si l'index est valide
         if match_index < 0 or match_index >= len(round.matchs):
@@ -200,23 +210,28 @@ class Controller:
         # Afficher les détails du match avant de le lancer
         self.view.afficher_match(round.nom, match, lancer=True)
 
-        resultat = input(f"Entrez le résultat du match (1 pour {joueur1_nom}, " 
-                         f"2 pour {joueur2_nom}, 'N' pour nul) : ").strip().upper()
+        resultat_valide = False
+        while not resultat_valide:
+            resultat = input(f"Entrez le résultat du match (1 pour {joueur1_nom}, "
+                             f"2 pour {joueur2_nom}, 'N' pour nul) : ").strip().upper()
 
-        # Mettre à jour les résultats et les scores
-        if resultat == 'N':
-            match.resultat = 'N'
-            tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 0.5
-            tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 0.5
-        elif resultat == '1':
-            match.resultat = '1'
-            tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 1
-        elif resultat == '2':
-            match.resultat = '2'
-            tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 1
-        else:
-            self.view.afficher_erreur("Résultat invalide. Veuillez entrer 1, 2 ou N.")
-            return  # Sortir de la méthode si le résultat est invalide
+            # Mettre à jour les résultats et les scores
+            if resultat == 'N':
+                match.resultat = 'N'
+                tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 0.5
+                tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 0.5
+                resultat_valide = True
+            elif resultat == '1':
+                match.resultat = '1'
+                tournoi_obj.scores[match.joueur1.matricule] = tournoi_obj.scores.get(match.joueur1.matricule, 0) + 1
+                resultat_valide = True
+            elif resultat == '2':
+                match.resultat = '2'
+                tournoi_obj.scores[match.joueur2.matricule] = tournoi_obj.scores.get(match.joueur2.matricule, 0) + 1
+                resultat_valide = True
+            else:
+                self.view.afficher_erreur("Résultat invalide. Veuillez entrer 1, 2 ou N.")
+                # La boucle continue tant que le résultat n'est pas valide
 
         self.view.afficher_message(f"======> Résultat enregistré pour le match {match_index + 1}")
 
@@ -297,11 +312,16 @@ class Controller:
         return []
 
     def charger_tous_les_tournois(self):
-        if os.path.exists(self.tournois_path):
-            with open(self.tournois_path, 'r', encoding='utf-8') as file:
-                return json.load(file)
-        return []
-    
+        # Charger tous les tournois enregistrés
+        try:
+            with open('data/tournaments.json', 'r') as f:
+                tournois = json.load(f)
+                # Filtrer les tournois pour exclure ceux qui sont terminés
+                tournois_disponibles = [t for t in tournois if not t.get('termine', False)]
+                return tournois_disponibles
+        except FileNotFoundError:
+            return []
+
     def sauvegarder_tournoi(self, tournoi_id, tournoi):
         with open(f'data/{tournoi_id}.json', 'w', encoding='utf-8') as file:
             json.dump(tournoi.to_dict(), file, ensure_ascii=False, indent=4)
