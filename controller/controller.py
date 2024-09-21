@@ -314,13 +314,20 @@ class Controller:
     def charger_tous_les_tournois(self):
         # Charger tous les tournois enregistrés
         try:
-            with open('data/tournaments.json', 'r') as f:
+            with open('data/tournois.json', 'r') as f:
                 tournois = json.load(f)
-                # Filtrer les tournois pour exclure ceux qui sont terminés
-                tournois_disponibles = [t for t in tournois if not t.get('termine', False)]
-                return tournois_disponibles
+                return tournois
         except FileNotFoundError:
             return []
+        
+    def afficher_tournois_termines(self):
+        tournois = self.get_tournois()  # Supposons que cette méthode renvoie la liste des tournois
+        tournois_termines = [tournoi for tournoi in tournois if tournoi.est_termine]  
+    
+        if tournois_termines:
+            self.view.afficher_tous_les_tournois(tournois_termines)
+        else:
+            self.view.afficher_message("Aucun tournoi terminé.")
 
     def sauvegarder_tournoi(self, tournoi_id, tournoi):
         with open(f'data/{tournoi_id}.json', 'w', encoding='utf-8') as file:
